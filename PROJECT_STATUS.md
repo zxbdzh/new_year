@@ -42,7 +42,7 @@
    ```
 
 5. **类型定义**
-   - ✅ `FireworkTypes.ts` - 烟花相关类型
+   - ✅ `FireworkTypes.ts` - 烟花相关类型（已添加完整JSDoc文档）
    - ✅ `GameTypes.ts` - 游戏状态类型
    - ✅ `NetworkTypes.ts` - 网络通信类型
    - ✅ `AudioTypes.ts` - 音频系统类型
