@@ -87,6 +87,12 @@
   - ✅ 属性 25: 房间码格式验证
   - ✅ 属性 26: 验证失败错误消息
 
+- **单元测试**: 全部通过
+  - ✅ InputValidator (4个属性测试)
+  - ✅ CountdownEngine (2个属性测试 + 单元测试)
+  - ✅ ComboSystem (单元测试)
+  - ✅ PerformanceOptimizer (单元测试)
+
 ### ✅ 任务 2: 实现核心类型定义
 
 **完成时间**: 2026-02-11
@@ -211,6 +217,35 @@
    - 状态不可变性（返回副本）
    - 完整的回调管理
 
+### ✅ 任务 12.1: 创建PerformanceOptimizer类
+
+**完成时间**: 2026-02-11
+
+**完成内容**:
+
+1. **PerformanceOptimizer类** (`src/services/PerformanceOptimizer.ts`)
+   - ✅ `detectPerformance()` - 检测设备性能（移动/桌面、WebGL、内存）
+   - ✅ `createProfile()` - 创建三档性能配置（low/medium/high）
+   - ✅ `updateFPS()` - 更新FPS统计（保留最近60帧）
+   - ✅ `getAverageFPS()` - 计算平均FPS
+   - ✅ `adjustProfile()` - 动态调整质量（FPS<30降级，FPS>50升级）
+   - ✅ `degradeQuality()` / `upgradeQuality()` - 质量调整逻辑
+   - ✅ `getProfile()` / `setProfile()` - 配置管理
+   - ✅ `resetFPS()` - 重置FPS统计
+
+2. **性能配置**:
+   - **Low**: 50粒子, 3烟花, 无WebGL, 无特效
+   - **Medium**: 100粒子, 5烟花, 无WebGL, 有光晕
+   - **High**: 200粒子, 10烟花, WebGL, 全特效
+
+3. **单元测试** (`src/services/PerformanceOptimizer.test.ts`)
+   - ✅ 性能检测测试
+   - ✅ FPS监控测试（60 FPS、30 FPS）
+   - ✅ 动态质量调整测试（降级/升级）
+   - ✅ 边界条件测试（最低/最高配置）
+   - ✅ 手动配置测试
+   - ✅ 所有测试通过
+
 ## 下一步任务
 
 参考 `.kiro/specs/new-year-fireworks-game/tasks.md` 中的任务列表：
@@ -220,6 +255,9 @@
 - 任务 8.4-8.5: 集成烟花音效
 - 任务 9.2: 编写连击触发条件属性测试
 - 任务 9.3: 实现连击特效
+- 任务 10: 实现统计追踪系统
+- 任务 11: 实现主题管理系统
+- 任务 12.2-12.3: 实现响应式布局和属性测试
 - ...
 
 ## 技术栈确认

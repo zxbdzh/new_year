@@ -3,7 +3,7 @@
  * Feature: new-year-fireworks-game
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { PerformanceOptimizer } from './PerformanceOptimizer';
 import type { PerformanceLevel } from '../types/PerformanceTypes';
 
