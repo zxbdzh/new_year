@@ -1,8 +1,8 @@
-# 启动界面和模式选择组件
+# 游戏界面组件
 
 ## 概述
 
-本目录包含任务16实现的启动界面和模式选择组件。
+本目录包含游戏的核心界面组件，包括启动界面、模式选择和倒计时显示。
 
 ## 组件列表
 
@@ -58,6 +58,8 @@
 ```tsx
 import { LaunchScreen } from './components/LaunchScreen';
 import { ModeSelection } from './components/ModeSelection';
+import { CountdownDisplay } from './components/CountdownDisplay';
+import { CountdownEngine } from './engines/CountdownEngine';
 
 // 启动界面
 <LaunchScreen 
@@ -71,6 +73,18 @@ import { ModeSelection } from './components/ModeSelection';
   onToggleMute={() => dispatch(toggleMusicMute())}
   isMuted={isMusicMuted}
   isOnline={navigator.onLine}
+/>
+
+// 倒计时显示
+const countdownEngine = new CountdownEngine({
+  targetDate: CountdownEngine.getNextLunarNewYear(),
+  timezone: 'Asia/Shanghai',
+  manualOffset: 0
+});
+
+<CountdownDisplay 
+  engine={countdownEngine}
+  onCountdownZero={() => handleNewYearCelebration()}
 />
 ```
 
@@ -96,10 +110,64 @@ pnpm test ModeSelection.pbt --run
 pnpm test --run
 ```
 
+### CountdownDisplay（倒计时显示）
+**文件**: `CountdownDisplay.tsx`, `CountdownDisplay.css`
+
+**功能**:
+- 3D文字渲染效果（使用CSS transform和text-shadow）
+- 实时显示距离农历新年的剩余时间（天/小时/分钟/秒）
+- 少于1小时时的特殊效果（闪烁、红色光晕）
+- 手动时间校准功能（偏移调整）
+- 倒计时归零触发回调
+
+**Props**:
+- `engine: CountdownEngine` - 倒计时引擎实例
+- `onCountdownZero?: () => void` - 倒计时归零时的回调（可选）
+
+**需求**: 2.1, 2.3, 2.5
+
+**特性**:
+- 3D浮动动画效果
+- 紧急状态视觉反馈（红色闪烁）
+- 响应式设计（适配移动设备）
+- 校准对话框（支持正负偏移）
+
+**使用示例**:
+```tsx
+import { CountdownDisplay } from './components/CountdownDisplay';
+import { CountdownEngine } from './engines/CountdownEngine';
+
+// 创建倒计时引擎实例
+const countdownEngine = useMemo(() => {
+  const targetDate = CountdownEngine.getNextLunarNewYear();
+  return new CountdownEngine({
+    targetDate,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    manualOffset: 0,
+  });
+}, []);
+
+// 使用组件
+<CountdownDisplay 
+  engine={countdownEngine}
+  onCountdownZero={() => {
+    console.log('新年到了！');
+    dispatch(setMode('ended'));
+  }}
+/>
+```
+
+**状态管理**:
+- 使用`useState`管理倒计时时间、校准对话框状态
+- 使用`useCallback`优化回调函数
+- 使用`useEffect`注册/注销引擎回调
+
+**样式特性**:
+- 3D浮动动画（`time-3d`类）
+- 紧急状态样式（`urgent`类，红色闪烁）
+- 校准对话框（模态覆盖层）
+- 响应式字体大小
+
 ## 下一步
 
-任务17将实现倒计时显示组件，包括：
-- CountdownDisplay组件
-- 3D文字渲染效果
-- 倒计时归零触发
-- 手动时间校准功能
+任务17.2将实现倒计时归零触发和新年祝福动画的集成测试。

@@ -1,0 +1,320 @@
+/**
+ * 倒计时显示组件样式
+ * Feature: new-year-fireworks-game
+ */
+
+.countdown-display {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+/* 倒计时容器 */
+.countdown-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  perspective: 1000px;
+  transition: all 0.3s ease;
+}
+
+/* 时间单位 */
+.time-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* 3D时间值 */
+.time-value {
+  font-size: 4rem;
+  font-weight: bold;
+  color: #FFD700;
+  text-shadow: 
+    0 1px 0 #ccc,
+    0 2px 0 #c9c9c9,
+    0 3px 0 #bbb,
+    0 4px 0 #b9b9b9,
+    0 5px 0 #aaa,
+    0 6px 1px rgba(0,0,0,.1),
+    0 0 5px rgba(0,0,0,.1),
+    0 1px 3px rgba(0,0,0,.3),
+    0 3px 5px rgba(0,0,0,.2),
+    0 5px 10px rgba(0,0,0,.25),
+    0 10px 10px rgba(0,0,0,.2),
+    0 20px 20px rgba(0,0,0,.15);
+  transform-style: preserve-3d;
+  animation: float 3s ease-in-out infinite;
+}
+
+/* 3D浮动动画 */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotateX(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotateX(5deg);
+  }
+}
+
+/* 时间标签 */
+.time-label {
+  font-size: 1rem;
+  color: #FF6B6B;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* 时间分隔符 */
+.time-separator {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #FFD700;
+  margin: 0 0.5rem;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* 紧急状态（少于1小时） */
+.countdown-container.urgent .time-value {
+  color: #FF4444;
+  animation: blink 0.5s ease-in-out infinite, float 3s ease-in-out infinite;
+}
+
+.countdown-container.urgent .time-separator {
+  color: #FF4444;
+}
+
+.countdown-container.urgent {
+  filter: drop-shadow(0 0 20px rgba(255, 68, 68, 0.8));
+}
+
+/* 闪烁动画 */
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+    text-shadow: 
+      0 0 10px rgba(255, 68, 68, 0.8),
+      0 0 20px rgba(255, 68, 68, 0.6),
+      0 0 30px rgba(255, 68, 68, 0.4),
+      0 1px 0 #ccc,
+      0 2px 0 #c9c9c9,
+      0 3px 0 #bbb,
+      0 4px 0 #b9b9b9,
+      0 5px 0 #aaa;
+  }
+  50% {
+    opacity: 0.7;
+    text-shadow: 
+      0 0 5px rgba(255, 68, 68, 0.5),
+      0 0 10px rgba(255, 68, 68, 0.3),
+      0 1px 0 #ccc,
+      0 2px 0 #c9c9c9;
+  }
+}
+
+/* 校准按钮 */
+.calibration-button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.calibration-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.calibration-button:active {
+  transform: translateY(0);
+}
+
+/* 校准对话框遮罩 */
+.calibration-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 校准对话框 */
+.calibration-dialog {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* 对话框标题 */
+.dialog-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+}
+
+/* 对话框描述 */
+.dialog-description {
+  margin: 0 0 1.5rem 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+}
+
+/* 校准输入框 */
+.calibration-input {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1.1rem;
+  text-align: center;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.calibration-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.calibration-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* 对话框操作按钮 */
+.dialog-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.dialog-button {
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dialog-button-cancel {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.dialog-button-cancel:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.dialog-button-confirm {
+  background: #fff;
+  color: #667eea;
+}
+
+.dialog-button-confirm:hover {
+  background: #f0f0f0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dialog-button:active {
+  transform: translateY(0);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .time-value {
+    font-size: 2.5rem;
+  }
+  
+  .time-separator {
+    font-size: 2rem;
+    margin: 0 0.25rem;
+  }
+  
+  .time-label {
+    font-size: 0.8rem;
+  }
+  
+  .countdown-container {
+    gap: 0.5rem;
+  }
+  
+  .calibration-dialog {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .time-value {
+    font-size: 1.8rem;
+  }
+  
+  .time-separator {
+    font-size: 1.5rem;
+  }
+  
+  .time-label {
+    font-size: 0.7rem;
+  }
+  
+  .countdown-display {
+    padding: 1rem;
+  }
+}

@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { setMode } from './store/gameSlice';
 import { toggleMusicMute } from './store/audioSlice';
 import { LaunchScreen } from './components/LaunchScreen';
 import { ModeSelection } from './components/ModeSelection';
+import { CountdownDisplay } from './components/CountdownDisplay';
+import { GameEndScreen } from './components/GameEndScreen';
+import { CountdownEngine } from './engines/CountdownEngine';
 import type { GameMode } from './types/GameTypes';
 import './App.css';
 
@@ -12,6 +15,16 @@ function App() {
   const mode = useAppSelector((state) => state.game.mode);
   const isMusicMuted = useAppSelector((state) => state.audio.config.musicMuted);
   const [hasStarted, setHasStarted] = useState(false);
+
+  // 创建倒计时引擎实例（仅创建一次）
+  const countdownEngine = useMemo(() => {
+    const targetDate = CountdownEngine.getNextLunarNewYear();
+    return new CountdownEngine({
+      targetDate,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      manualOffset: 0,
+    });
+  }, []);
 
   const handleStart = () => {
     setHasStarted(true);
@@ -28,6 +41,13 @@ function App() {
 
   const handleToggleMute = () => {
     dispatch(toggleMusicMute());
+  };
+
+  // 处理倒计时归零事件
+  const handleCountdownZero = () => {
+    console.log('Countdown reached zero - triggering game end flow');
+    // 触发游戏结束流程
+    dispatch(setMode('ended'));
   };
 
   // 显示启动界面
@@ -52,19 +72,26 @@ function App() {
     );
   }
 
+  // 显示游戏结束界面
+  if (mode === 'ended') {
+    return <GameEndScreen show={true} />;
+  }
+
   // 游戏界面占位符（将在后续任务中实现）
   return (
     <div style={{ 
       width: '100vw', 
       height: '100vh', 
       display: 'flex', 
+      flexDirection: 'column',
       alignItems: 'center', 
       justifyContent: 'center',
       background: 'linear-gradient(135deg, #1a0a0a 0%, #4a0e0e 50%, #8b0000 100%)',
       color: '#ffd700',
       fontSize: '24px',
       textAlign: 'center',
-      padding: '20px'
+      padding: '20px',
+      gap: '40px'
     }}>
       <div>
         <h1>游戏模式: {mode === 'single' ? '单人模式' : '多人模式'}</h1>
@@ -85,6 +112,12 @@ function App() {
           返回模式选择
         </button>
       </div>
+      
+      {/* 集成倒计时显示组件 */}
+      <CountdownDisplay 
+        engine={countdownEngine}
+        onCountdownZero={handleCountdownZero}
+      />
     </div>
   );
 }

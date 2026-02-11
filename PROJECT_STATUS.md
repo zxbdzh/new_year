@@ -279,10 +279,48 @@
    - 完整的JSDoc文档
    - 类型安全的PayloadAction
 
+### ✅ 任务 17.1: 创建CountdownDisplay组件
+
+**完成时间**: 2026-02-11
+
+**完成内容**:
+
+1. **CountdownDisplay组件** (`src/components/CountdownDisplay.tsx`)
+   - ✅ 3D文字渲染效果（CSS transform + text-shadow）
+   - ✅ 实时显示剩余时间（天/小时/分钟/秒格式）
+   - ✅ 少于1小时的特殊效果（闪烁、红色光晕）
+   - ✅ 手动时间校准功能（偏移调整对话框）
+   - ✅ 倒计时归零触发回调
+   - ✅ 集成CountdownEngine
+   - ✅ 完整的TypeScript类型支持
+
+2. **实现特性**:
+   - 使用React hooks（useState, useEffect, useCallback）
+   - 注册/注销倒计时更新回调
+   - 格式化数字为两位数显示
+   - 校准对话框（模态覆盖层）
+   - 紧急状态检测（totalSeconds < 3600）
+   - 归零检测和回调触发
+   - 响应式设计（适配移动设备）
+
+3. **Props接口**:
+   ```typescript
+   interface CountdownDisplayProps {
+     engine: CountdownEngine;
+     onCountdownZero?: () => void;
+   }
+   ```
+
+4. **集成到App.tsx**:
+   - ✅ 创建CountdownEngine实例（useMemo优化）
+   - ✅ 在游戏界面中显示倒计时
+   - ✅ 处理倒计时归零事件（切换到结束界面）
+
 ## 下一步任务
 
 参考 `.kiro/specs/new-year-fireworks-game/tasks.md` 中的任务列表：
 
+- 任务 17.2: 实现倒计时归零触发和新年祝福动画
 - 任务 7: 实现烟花引擎核心功能
 - 任务 8.1-8.2: 实现AudioController和音频属性测试
 - 任务 8.4-8.5: 集成烟花音效
