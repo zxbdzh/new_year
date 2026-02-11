@@ -81,10 +81,15 @@ describe('AudioController - Property-Based Tests', () => {
   let audioController: AudioController;
 
   beforeEach(async () => {
-    storageService = new StorageService();
+    // 创建mock存储服务，避免IndexedDB初始化问题
+    storageService = {
+      save: vi.fn().mockResolvedValue(undefined),
+      load: vi.fn().mockResolvedValue(null),
+    } as any;
+    
     audioController = new AudioController(storageService);
     await audioController.initialize();
-  }, 15000); // 增加超时时间
+  });
 
   afterEach(() => {
     if (audioController) {
@@ -227,6 +232,17 @@ describe('AudioController - Property-Based Tests', () => {
   // Feature: new-year-fireworks-game, Property 20: 音频配置持久化往返
   describe('Property 20: 音频配置持久化往返', () => {
     it('对于任何音频配置，保存后加载应该得到相同的配置', async () => {
+      // 创建一个真实的存储mock
+      const storage = new Map<string, any>();
+      const mockStorage = {
+        save: vi.fn().mockImplementation(async (key: string, value: any) => {
+          storage.set(key, value);
+        }),
+        load: vi.fn().mockImplementation(async (key: string) => {
+          return storage.get(key) || null;
+        }),
+      } as any;
+
       await fc.assert(
         fc.asyncProperty(
           fc.float({ min: 0, max: 1, noNaN: true }),
@@ -234,20 +250,23 @@ describe('AudioController - Property-Based Tests', () => {
           fc.boolean(),
           fc.boolean(),
           async (musicVolume, sfxVolume, musicMuted, sfxMuted) => {
-            audioController.setMusicVolume(musicVolume);
-            audioController.setSFXVolume(sfxVolume);
+            const controller = new AudioController(mockStorage);
+            await controller.initialize();
             
-            const currentConfig = audioController.getConfig();
+            controller.setMusicVolume(musicVolume);
+            controller.setSFXVolume(sfxVolume);
+            
+            const currentConfig = controller.getConfig();
             if (currentConfig.musicMuted !== musicMuted) {
-              audioController.toggleMusicMute();
+              controller.toggleMusicMute();
             }
             if (currentConfig.sfxMuted !== sfxMuted) {
-              audioController.toggleSFXMute();
+              controller.toggleSFXMute();
             }
 
-            await audioController.saveConfig();
+            await controller.saveConfig();
 
-            const newController = new AudioController(storageService);
+            const newController = new AudioController(mockStorage);
             await newController.initialize();
 
             const loadedConfig = newController.getConfig();
@@ -257,6 +276,7 @@ describe('AudioController - Property-Based Tests', () => {
             expect(loadedConfig.sfxMuted).toBe(sfxMuted);
 
             newController.destroy();
+            controller.destroy();
           }
         ),
         { numRuns: 20 }
