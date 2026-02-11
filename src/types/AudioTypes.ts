@@ -1,12 +1,9 @@
 /**
  * 音频类型定义
  * Feature: new-year-fireworks-game
+ * 
+ * 使用Web Audio API动态生成音效，无需外部音频文件
  */
-
-/**
- * 音频资源类型
- */
-export type AudioAssetType = 'music' | 'sfx';
 
 /**
  * 音频配置
@@ -23,15 +20,10 @@ export interface AudioConfig {
 }
 
 /**
- * 音频资源
+ * 音效类型
+ * - launch: 烟花发射音效
+ * - explosion: 烟花爆炸音效
+ * - click: 点击音效
+ * - success: 成功音效
  */
-export interface AudioAsset {
-  /** 资源唯一标识 */
-  id: string;
-  /** 资源URL */
-  url: string;
-  /** 资源类型 */
-  type: AudioAssetType;
-  /** 音频缓冲区 */
-  buffer?: AudioBuffer;
-}
+export type SFXType = 'launch' | 'explosion' | 'click' | 'success';

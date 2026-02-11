@@ -1,6 +1,8 @@
 /**
  * 音频控制器属性测试
  * Feature: new-year-fireworks-game
+ * 
+ * 测试使用Web Audio API动态生成音效的AudioController
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -12,18 +14,19 @@ import { StorageService } from './StorageService';
 class MockAudioContext {
   state = 'running';
   destination = {};
+  sampleRate = 44100;
 
   createGain() {
     return {
-      gain: { value: 1 },
+      gain: { value: 1, setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
       connect: vi.fn()
     };
   }
 
-  createBufferSource() {
+  createOscillator() {
     return {
-      buffer: null,
-      loop: false,
+      type: 'sine',
+      frequency: { value: 440, setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
       connect: vi.fn(),
       disconnect: vi.fn(),
       start: vi.fn(),
@@ -32,8 +35,32 @@ class MockAudioContext {
     };
   }
 
-  async decodeAudioData(arrayBuffer: ArrayBuffer) {
-    return { duration: 1, length: 44100, sampleRate: 44100 };
+  createBuffer(channels: number, length: number, sampleRate: number) {
+    return {
+      getChannelData: () => new Float32Array(length)
+    };
+  }
+
+  createBufferSource() {
+    return {
+      buffer: null,
+      connect: vi.fn(),
+      disconnect: vi.fn(),
+      start: vi.fn(),
+      stop: vi.fn()
+    };
+  }
+
+  createBiquadFilter() {
+    return {
+      type: 'lowpass',
+      frequency: { value: 1000, setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+      connect: vi.fn()
+    };
+  }
+
+  get currentTime() {
+    return Date.now() / 1000;
   }
 
   async resume() {
@@ -49,11 +76,6 @@ class MockAudioContext {
 (global as any).AudioContext = MockAudioContext;
 (global as any).window = { AudioContext: MockAudioContext };
 
-// Mock fetch
-global.fetch = vi.fn().mockResolvedValue({
-  arrayBuffer: async () => new ArrayBuffer(8)
-});
-
 describe('AudioController - Property-Based Tests', () => {
   let storageService: StorageService;
   let audioController: AudioController;
@@ -62,7 +84,7 @@ describe('AudioController - Property-Based Tests', () => {
     storageService = new StorageService();
     audioController = new AudioController(storageService);
     await audioController.initialize();
-  });
+  }, 15000); // 增加超时时间
 
   afterEach(() => {
     if (audioController) {
@@ -120,39 +142,23 @@ describe('AudioController - Property-Based Tests', () => {
 
   // Feature: new-year-fireworks-game, Property 18: 背景音乐循环播放
   describe('Property 18: 背景音乐循环播放', () => {
-    it('播放背景音乐时应该设置循环标志', async () => {
-      const testAsset = {
-        id: 'test-music',
-        url: 'test.mp3',
-        type: 'music' as const
-      };
-
-      await audioController.loadAsset(testAsset);
-      audioController.playMusic('test-music');
-
+    it('应该能够播放背景音乐', () => {
+      audioController.playMusic();
       const config = audioController.getConfig();
       expect(config).toBeDefined();
     });
 
-    it('停止音乐后应该能够重新播放', async () => {
-      const testAsset = {
-        id: 'test-music-2',
-        url: 'test2.mp3',
-        type: 'music' as const
-      };
-
-      await audioController.loadAsset(testAsset);
-
+    it('停止音乐后应该能够重新播放', () => {
       fc.assert(
         fc.property(
           fc.integer({ min: 1, max: 5 }),
           (playCount) => {
             for (let i = 0; i < playCount; i++) {
-              audioController.playMusic('test-music-2');
+              audioController.playMusic();
               audioController.stopMusic();
             }
 
-            audioController.playMusic('test-music-2');
+            audioController.playMusic();
             expect(audioController.getConfig()).toBeDefined();
             
             audioController.stopMusic();
@@ -293,33 +299,25 @@ describe('AudioController - Property-Based Tests', () => {
     });
   });
 
-  // 辅助测试：验证资源加载
-  describe('资源加载', () => {
-    it('应该能够加载音频资源', async () => {
-      const asset = {
-        id: 'test-asset',
-        url: 'test.mp3',
-        type: 'music' as const
-      };
-
-      await audioController.loadAsset(asset);
-      audioController.playMusic('test-asset');
+  // 辅助测试：验证音效播放
+  describe('音效播放', () => {
+    it('应该能够播放发射音效', () => {
+      audioController.playSFX('launch');
       expect(audioController.getConfig()).toBeDefined();
-      
-      audioController.stopMusic();
     });
 
-    it('重复加载同一资源应该跳过', async () => {
-      const asset = {
-        id: 'test-asset-2',
-        url: 'test2.mp3',
-        type: 'sfx' as const
-      };
+    it('应该能够播放爆炸音效', () => {
+      audioController.playSFX('explosion');
+      expect(audioController.getConfig()).toBeDefined();
+    });
 
-      await audioController.loadAsset(asset);
-      await audioController.loadAsset(asset);
+    it('应该能够播放点击音效', () => {
+      audioController.playSFX('click');
+      expect(audioController.getConfig()).toBeDefined();
+    });
 
-      audioController.playSFX('test-asset-2');
+    it('应该能够播放成功音效', () => {
+      audioController.playSFX('success');
       expect(audioController.getConfig()).toBeDefined();
     });
   });

@@ -2,25 +2,24 @@
  * 音频控制器
  * Feature: new-year-fireworks-game
  * 
- * 管理背景音乐和音效
+ * 使用Web Audio API动态生成音效，无需外部音频文件
  * 需求：1.4, 3.3, 3.4, 6.2, 6.3, 6.4
  */
 
-import type { AudioConfig, AudioAsset } from '../types';
+import type { AudioConfig } from '../types';
 import { StorageService } from './StorageService';
 
 /**
  * 音频控制器类
+ * 使用Web Audio API合成所有音效
  */
 export class AudioController {
   private audioContext: AudioContext | null = null;
-  private assets: Map<string, AudioAsset> = new Map();
   private config: AudioConfig;
-  private musicSource: AudioBufferSourceNode | null = null;
   private musicGainNode: GainNode | null = null;
   private sfxGainNode: GainNode | null = null;
   private storageService: StorageService;
-  private currentMusicId: string | null = null;
+  private musicOscillators: OscillatorNode[] = [];
   private isInitialized: boolean = false;
 
   /**
@@ -33,8 +32,8 @@ export class AudioController {
     
     // 默认配置
     this.config = {
-      musicVolume: 0.7,
-      sfxVolume: 0.8,
+      musicVolume: 0.3,
+      sfxVolume: 0.5,
       musicMuted: false,
       sfxMuted: false
     };
@@ -106,47 +105,11 @@ export class AudioController {
   }
 
   /**
-   * 加载音频资源
-   * 
-   * @param asset - 音频资源
-   * @returns Promise
-   */
-  async loadAsset(asset: AudioAsset): Promise<void> {
-    if (!this.audioContext) {
-      throw new Error('AudioContext not initialized');
-    }
-
-    try {
-      // 如果已加载，跳过
-      if (this.assets.has(asset.id) && this.assets.get(asset.id)?.buffer) {
-        return;
-      }
-
-      // 获取音频数据
-      const response = await fetch(asset.url);
-      const arrayBuffer = await response.arrayBuffer();
-
-      // 解码音频数据
-      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-
-      // 保存到资源映射
-      this.assets.set(asset.id, {
-        ...asset,
-        buffer: audioBuffer
-      });
-    } catch (error) {
-      console.error(`Failed to load audio asset ${asset.id}:`, error);
-      throw error;
-    }
-  }
-
-  /**
    * 播放背景音乐（循环）
+   * 使用多个振荡器合成简单的旋律
    * 需求：6.2
-   * 
-   * @param assetId - 音频资源ID
    */
-  playMusic(assetId: string): void {
+  playMusic(): void {
     if (!this.audioContext || !this.musicGainNode) {
       console.warn('AudioContext not initialized');
       return;
@@ -155,25 +118,51 @@ export class AudioController {
     // 停止当前音乐
     this.stopMusic();
 
-    // 获取音频资源
-    const asset = this.assets.get(assetId);
-    if (!asset || !asset.buffer) {
-      console.warn(`Audio asset ${assetId} not found or not loaded`);
-      return;
-    }
-
     try {
-      // 创建音频源
-      this.musicSource = this.audioContext.createBufferSource();
-      this.musicSource.buffer = asset.buffer;
-      this.musicSource.loop = true; // 循环播放
+      const now = this.audioContext.currentTime;
+      
+      // 创建简单的新年主题旋律（使用C大调音阶）
+      const melody = [
+        { freq: 523.25, duration: 0.5 }, // C5
+        { freq: 587.33, duration: 0.5 }, // D5
+        { freq: 659.25, duration: 0.5 }, // E5
+        { freq: 523.25, duration: 0.5 }, // C5
+        { freq: 659.25, duration: 0.5 }, // E5
+        { freq: 783.99, duration: 1.0 }, // G5
+      ];
 
-      // 连接到增益节点
-      this.musicSource.connect(this.musicGainNode);
+      let time = now;
+      
+      melody.forEach(note => {
+        const osc = this.audioContext!.createOscillator();
+        const noteGain = this.audioContext!.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.value = note.freq;
+        
+        // 音符包络
+        noteGain.gain.setValueAtTime(0, time);
+        noteGain.gain.linearRampToValueAtTime(0.3, time + 0.05);
+        noteGain.gain.exponentialRampToValueAtTime(0.01, time + note.duration);
+        
+        osc.connect(noteGain);
+        noteGain.connect(this.musicGainNode!);
+        
+        osc.start(time);
+        osc.stop(time + note.duration);
+        
+        this.musicOscillators.push(osc);
+        time += note.duration;
+      });
 
-      // 播放
-      this.musicSource.start(0);
-      this.currentMusicId = assetId;
+      // 循环播放
+      const totalDuration = melody.reduce((sum, note) => sum + note.duration, 0);
+      setTimeout(() => {
+        if (this.musicOscillators.length > 0) {
+          this.playMusic();
+        }
+      }, totalDuration * 1000);
+
     } catch (error) {
       console.error('Failed to play music:', error);
     }
@@ -183,54 +172,196 @@ export class AudioController {
    * 停止背景音乐
    */
   stopMusic(): void {
-    if (this.musicSource) {
+    this.musicOscillators.forEach(osc => {
       try {
-        this.musicSource.stop();
+        osc.stop();
+        osc.disconnect();
       } catch (error) {
         // 忽略已停止的错误
       }
-      this.musicSource.disconnect();
-      this.musicSource = null;
-      this.currentMusicId = null;
-    }
+    });
+    this.musicOscillators = [];
   }
 
   /**
-   * 播放音效
-   * 需求：3.3, 3.4
-   * 
-   * @param assetId - 音频资源ID
+   * 播放烟花发射音效（"嗖"声）
+   * 需求：3.3
    */
-  playSFX(assetId: string): void {
+  playLaunchSFX(): void {
     if (!this.audioContext || !this.sfxGainNode) {
-      console.warn('AudioContext not initialized');
-      return;
-    }
-
-    // 获取音频资源
-    const asset = this.assets.get(assetId);
-    if (!asset || !asset.buffer) {
-      console.warn(`Audio asset ${assetId} not found or not loaded`);
       return;
     }
 
     try {
-      // 创建音频源（每次播放创建新的源）
-      const source = this.audioContext.createBufferSource();
-      source.buffer = asset.buffer;
-
-      // 连接到增益节点
-      source.connect(this.sfxGainNode);
-
-      // 播放
-      source.start(0);
-
-      // 播放完成后自动清理
-      source.onended = () => {
-        source.disconnect();
-      };
+      const now = this.audioContext.currentTime;
+      
+      // 创建上升的音调模拟"嗖"声
+      const osc = this.audioContext.createOscillator();
+      const gain = this.audioContext.createGain();
+      
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(200, now);
+      osc.frequency.exponentialRampToValueAtTime(800, now + 0.3);
+      
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      
+      osc.connect(gain);
+      gain.connect(this.sfxGainNode);
+      
+      osc.start(now);
+      osc.stop(now + 0.3);
     } catch (error) {
-      console.error('Failed to play SFX:', error);
+      console.error('Failed to play launch SFX:', error);
+    }
+  }
+
+  /**
+   * 播放烟花爆炸音效（"砰"声）
+   * 需求：3.4
+   */
+  playExplosionSFX(): void {
+    if (!this.audioContext || !this.sfxGainNode) {
+      return;
+    }
+
+    try {
+      const now = this.audioContext.currentTime;
+      
+      // 使用白噪声和低频振荡器模拟爆炸声
+      const bufferSize = this.audioContext.sampleRate * 0.5;
+      const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
+      
+      // 生成白噪声
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      
+      const noise = this.audioContext.createBufferSource();
+      noise.buffer = buffer;
+      
+      const noiseFilter = this.audioContext.createBiquadFilter();
+      noiseFilter.type = 'lowpass';
+      noiseFilter.frequency.setValueAtTime(1000, now);
+      noiseFilter.frequency.exponentialRampToValueAtTime(100, now + 0.5);
+      
+      const noiseGain = this.audioContext.createGain();
+      noiseGain.gain.setValueAtTime(0.5, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+      
+      noise.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(this.sfxGainNode);
+      
+      noise.start(now);
+      noise.stop(now + 0.5);
+      
+      // 添加低频"砰"声
+      const bass = this.audioContext.createOscillator();
+      const bassGain = this.audioContext.createGain();
+      
+      bass.type = 'sine';
+      bass.frequency.setValueAtTime(80, now);
+      bass.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+      
+      bassGain.gain.setValueAtTime(0.6, now);
+      bassGain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      
+      bass.connect(bassGain);
+      bassGain.connect(this.sfxGainNode);
+      
+      bass.start(now);
+      bass.stop(now + 0.3);
+    } catch (error) {
+      console.error('Failed to play explosion SFX:', error);
+    }
+  }
+
+  /**
+   * 播放通用音效
+   * 
+   * @param type - 音效类型：'launch' | 'explosion' | 'click' | 'success'
+   */
+  playSFX(type: 'launch' | 'explosion' | 'click' | 'success'): void {
+    switch (type) {
+      case 'launch':
+        this.playLaunchSFX();
+        break;
+      case 'explosion':
+        this.playExplosionSFX();
+        break;
+      case 'click':
+        this.playClickSFX();
+        break;
+      case 'success':
+        this.playSuccessSFX();
+        break;
+    }
+  }
+
+  /**
+   * 播放点击音效
+   */
+  private playClickSFX(): void {
+    if (!this.audioContext || !this.sfxGainNode) {
+      return;
+    }
+
+    try {
+      const now = this.audioContext.currentTime;
+      const osc = this.audioContext.createOscillator();
+      const gain = this.audioContext.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.value = 800;
+      
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+      
+      osc.connect(gain);
+      gain.connect(this.sfxGainNode);
+      
+      osc.start(now);
+      osc.stop(now + 0.1);
+    } catch (error) {
+      console.error('Failed to play click SFX:', error);
+    }
+  }
+
+  /**
+   * 播放成功音效
+   */
+  private playSuccessSFX(): void {
+    if (!this.audioContext || !this.sfxGainNode) {
+      return;
+    }
+
+    try {
+      const now = this.audioContext.currentTime;
+      
+      // 播放上升的和弦
+      const frequencies = [523.25, 659.25, 783.99]; // C-E-G 和弦
+      
+      frequencies.forEach((freq, index) => {
+        const osc = this.audioContext!.createOscillator();
+        const gain = this.audioContext!.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        
+        const startTime = now + index * 0.1;
+        gain.gain.setValueAtTime(0.15, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.5);
+        
+        osc.connect(gain);
+        gain.connect(this.sfxGainNode!);
+        
+        osc.start(startTime);
+        osc.stop(startTime + 0.5);
+      });
+    } catch (error) {
+      console.error('Failed to play success SFX:', error);
     }
   }
 
@@ -340,7 +471,6 @@ export class AudioController {
       this.audioContext = null;
     }
 
-    this.assets.clear();
     this.isInitialized = false;
   }
 }

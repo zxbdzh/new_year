@@ -30,11 +30,15 @@ class MockIDBOpenDBRequest {
   result: any = new MockIDBDatabase();
 
   constructor() {
-    setTimeout(() => {
+    // 立即触发成功回调
+    Promise.resolve().then(() => {
+      if (this.onupgradeneeded) {
+        this.onupgradeneeded({ target: { result: this.result } });
+      }
       if (this.onsuccess) {
         this.onsuccess({ target: { result: this.result } });
       }
-    }, 0);
+    });
   }
 }
 
