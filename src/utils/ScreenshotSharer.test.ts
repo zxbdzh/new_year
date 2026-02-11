@@ -16,12 +16,16 @@ describe('ScreenshotSharer', () => {
     canvas.width = 800;
     canvas.height = 600;
 
-    // 绘制一些内容
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.fillStyle = 'red';
-      ctx.fillRect(0, 0, 100, 100);
-    }
+    // Mock toDataURL
+    canvas.toDataURL = vi.fn((type?: string) => {
+      return `data:${type || 'image/png'};base64,mockBase64Data`;
+    }) as any;
+
+    // Mock toBlob
+    canvas.toBlob = vi.fn((callback, type?: string, quality?: number) => {
+      const blob = new Blob(['mock'], { type: type || 'image/png' });
+      setTimeout(() => callback(blob), 0);
+    }) as any;
 
     sharer = new ScreenshotSharer(canvas);
   });
