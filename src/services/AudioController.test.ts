@@ -233,13 +233,13 @@ describe('AudioController - Property-Based Tests', () => {
   describe('Property 20: 音频配置持久化往返', () => {
     it('对于任何音频配置，保存后加载应该得到相同的配置', async () => {
       // 创建一个真实的存储mock
-      const storage = new Map<string, any>();
+      let storedData: any = null;
       const mockStorage = {
-        save: vi.fn().mockImplementation(async (key: string, value: any) => {
-          storage.set(key, value);
+        save: vi.fn().mockImplementation(async (data: any) => {
+          storedData = data;
         }),
-        load: vi.fn().mockImplementation(async (key: string) => {
-          return storage.get(key) || null;
+        load: vi.fn().mockImplementation(async () => {
+          return storedData;
         }),
       } as any;
 
