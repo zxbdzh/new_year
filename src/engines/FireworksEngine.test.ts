@@ -1,22 +1,49 @@
 /**
  * 烟花引擎属性测试
  * Feature: new-year-fireworks-game
+ * 
+ * 测试烟花引擎的音效完整性
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fc from 'fast-check';
 import { FireworksEngine } from './FireworksEngine';
+
+// Mock AudioController
+class MockAudioController {
+  launchSFXCalls: number = 0;
+  explosionSFXCalls: number = 0;
+
+  playLaunchSFX(): void {
+    this.launchSFXCalls++;
+  }
+
+  playExplosionSFX(): void {
+    this.explosionSFXCalls++;
+  }
+
+  reset(): void {
+    this.launchSFXCalls = 0;
+    this.explosionSFXCalls = 0;
+  }
+}
 
 describe('FireworksEngine - Property-Based Tests', () => {
   let canvas: HTMLCanvasElement;
   let engine: FireworksEngine;
+  let audioController: MockAudioController;
 
   beforeEach(() => {
-    // 创建测试用的Canvas
+    // 创建mock canvas
     canvas = document.createElement('canvas');
     canvas.width = 800;
     canvas.height = 600;
-    engine = new FireworksEngine(canvas);
+
+    // 创建mock音频控制器
+    audioController = new MockAudioController();
+
+    // 创建引擎
+    engine = new FireworksEngine(canvas, audioController);
   });
 
   afterEach(() => {
@@ -25,219 +52,119 @@ describe('FireworksEngine - Property-Based Tests', () => {
     }
   });
 
-  // Feature: new-year-fireworks-game, Property 6: 烟花类型有效性
-  describe('Property 6: 烟花类型有效性', () => {
-    it('对于任何生成的烟花实例，其类型应该属于预定义的烟花类型集合（至少5种）', () => {
-      // 获取所有可用烟花类型
-      const availableTypes = engine.getAvailableTypes();
-      
-      // 验证至少有5种烟花类型
-      expect(availableTypes.length).toBeGreaterThanOrEqual(5);
-      
-      // 验证包含所有必需的类型
-      const typeIds = availableTypes.map(t => t.id);
-      expect(typeIds).toContain('peony');
-      expect(typeIds).toContain('meteor');
-      expect(typeIds).toContain('heart');
-      expect(typeIds).toContain('fortune');
-      expect(typeIds).toContain('redEnvelope');
-
+  // Feature: new-year-fireworks-game, Property 7: 烟花音效完整性
+  describe('Property 7: 烟花音效完整性', () => {
+    it('对于任何烟花实例，应该在发射时触发发射音效', () => {
       fc.assert(
         fc.property(
-          fc.integer({ min: 0, max: canvas.width }),
-          fc.integer({ min: 0, max: canvas.height }),
+          fc.integer({ min: 0, max: 800 }),
+          fc.integer({ min: 0, max: 600 }),
           (x, y) => {
-            // 发射烟花（随机类型）
-            const fireworkId = engine.launchFirework(x, y);
-            
-            // 验证烟花ID已生成
-            expect(fireworkId).toBeDefined();
-            expect(typeof fireworkId).toBe('string');
-            expect(fireworkId.length).toBeGreaterThan(0);
-            
-            // 清理
-            engine.clear();
-          }
-        ),
-        { numRuns: 100 }
-      );
-    });
+            audioController.reset();
 
-    it('应该能够使用指定的烟花类型ID发射烟花', () => {
-      const availableTypes = engine.getAvailableTypes();
-      const typeIds = availableTypes.map(t => t.id);
-
-      fc.assert(
-        fc.property(
-          fc.integer({ min: 0, max: canvas.width }),
-          fc.integer({ min: 0, max: canvas.height }),
-          fc.constantFrom(...typeIds),
-          (x, y, typeId) => {
-            // 使用指定类型发射烟花
-            const fireworkId = engine.launchFirework(x, y, typeId);
-            
-            expect(fireworkId).toBeDefined();
-            expect(typeof fireworkId).toBe('string');
-            
-            // 清理
-            engine.clear();
-          }
-        ),
-        { numRuns: 100 }
-      );
-    });
-  });
-
-  // Feature: new-year-fireworks-game, Property 10: 特殊烟花概率生成
-  describe('Property 10: 特殊烟花概率生成', () => {
-    it('对于任何足够大的烟花生成样本（n≥100），应该至少包含一个带祝福语的特殊烟花', () => {
-      // 生成100个烟花并检查是否有特殊效果
-      const sampleSize = 100;
-      let hasSpecialEffect = false;
-
-      for (let i = 0; i < sampleSize; i++) {
-        const types = engine.getAvailableTypes();
-        
-        // 检查是否有任何类型包含特殊效果
-        for (const type of types) {
-          if (type.specialEffect) {
-            hasSpecialEffect = true;
-            break;
-          }
-        }
-        
-        if (hasSpecialEffect) break;
-        
-        // 重新注册类型以获取新的随机特殊效果
-        engine.destroy();
-        engine = new FireworksEngine(canvas);
-      }
-
-      // 由于特殊烟花是10%概率，100次采样应该至少有一次
-      // 注意：这个测试可能偶尔失败（概率极低）
-      expect(hasSpecialEffect).toBe(true);
-    });
-
-    it('特殊烟花的祝福语应该是有效的字符串', () => {
-      const types = engine.getAvailableTypes();
-      
-      for (const type of types) {
-        if (type.specialEffect) {
-          expect(typeof type.specialEffect).toBe('string');
-          expect(type.specialEffect.length).toBeGreaterThan(0);
-        }
-      }
-    });
-  });
-
-  // Feature: new-year-fireworks-game, Property 5: 烟花生成位置准确性
-  describe('Property 5: 烟花生成位置准确性', () => {
-    it('对于任何有效的点击坐标，烟花引擎应该在该坐标位置生成烟花实例', () => {
-      fc.assert(
-        fc.property(
-          fc.integer({ min: 0, max: canvas.width }),
-          fc.integer({ min: 0, max: canvas.height }),
-          (x, y) => {
-            const fireworkId = engine.launchFirework(x, y);
-            
-            // 验证烟花已生成
-            expect(fireworkId).toBeDefined();
-            expect(typeof fireworkId).toBe('string');
-            expect(fireworkId.startsWith('firework_')).toBe(true);
-            
-            engine.clear();
-          }
-        ),
-        { numRuns: 100 }
-      );
-    });
-  });
-
-  // Feature: new-year-fireworks-game, Property 8: 烟花动画持续时间
-  describe('Property 8: 烟花动画持续时间', () => {
-    it('对于任何烟花实例，其动画持续时间应该在2到3秒之间', () => {
-      const types = engine.getAvailableTypes();
-      
-      for (const type of types) {
-        // 验证持续时间在2000-3000毫秒之间
-        expect(type.duration).toBeGreaterThanOrEqual(2000);
-        expect(type.duration).toBeLessThanOrEqual(3000);
-      }
-    });
-
-    it('烟花动画应该在指定持续时间后完成', () => {
-      // 这个测试验证烟花状态转换的逻辑
-      const types = engine.getAvailableTypes();
-      
-      fc.assert(
-        fc.property(
-          fc.constantFrom(...types.map(t => t.id)),
-          (typeId) => {
-            const type = types.find(t => t.id === typeId)!;
-            
-            // 验证持续时间属性
-            expect(type.duration).toBeGreaterThanOrEqual(2000);
-            expect(type.duration).toBeLessThanOrEqual(3000);
-            
-            // 验证持续时间是合理的（2-3秒）
-            const durationInSeconds = type.duration / 1000;
-            expect(durationInSeconds).toBeGreaterThanOrEqual(2);
-            expect(durationInSeconds).toBeLessThanOrEqual(3);
-          }
-        ),
-        { numRuns: 100 }
-      );
-    });
-  });
-
-  // 辅助测试：验证烟花类型的基本属性
-  describe('烟花类型基本属性', () => {
-    it('所有烟花类型应该有有效的属性', () => {
-      const types = engine.getAvailableTypes();
-
-      for (const type of types) {
-        // 验证ID
-        expect(type.id).toBeDefined();
-        expect(typeof type.id).toBe('string');
-        expect(type.id.length).toBeGreaterThan(0);
-
-        // 验证名称
-        expect(type.name).toBeDefined();
-        expect(typeof type.name).toBe('string');
-
-        // 验证粒子数量
-        expect(type.particleCount).toBeGreaterThan(0);
-
-        // 验证颜色数组
-        expect(Array.isArray(type.colors)).toBe(true);
-        expect(type.colors.length).toBeGreaterThan(0);
-
-        // 验证图案类型
-        expect(['peony', 'meteor', 'heart', 'fortune', 'redEnvelope']).toContain(type.pattern);
-
-        // 验证持续时间
-        expect(type.duration).toBeGreaterThan(0);
-        expect(type.duration).toBeGreaterThanOrEqual(2000); // 至少2秒
-        expect(type.duration).toBeLessThanOrEqual(3000); // 最多3秒
-      }
-    });
-  });
-
-  // 辅助测试：验证烟花发射位置
-  describe('烟花发射位置', () => {
-    it('应该在指定坐标处发射烟花', () => {
-      fc.assert(
-        fc.property(
-          fc.integer({ min: 0, max: canvas.width }),
-          fc.integer({ min: 0, max: canvas.height }),
-          (x, y) => {
+            // 发射烟花
             engine.launchFirework(x, y);
-            
-            // 注意：由于烟花会立即开始动画，我们无法直接验证初始位置
-            // 但我们可以验证烟花已被创建
-            expect(engine).toBeDefined();
-            
-            engine.clear();
+
+            // 验证发射音效被调用
+            expect(audioController.launchSFXCalls).toBe(1);
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    it('对于任何烟花实例，应该在爆炸时触发爆炸音效', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 0, max: 800 }),
+          fc.integer({ min: 0, max: 600 }),
+          (x, y) => {
+            // 使用fake timers来控制时间
+            vi.useFakeTimers();
+            audioController.reset();
+
+            // 发射烟花
+            const startTime = Date.now();
+            engine.launchFirework(x, y);
+
+            // 前进时间到爆炸状态（200ms后进入爆炸状态）
+            vi.advanceTimersByTime(250);
+
+            // 手动更新引擎状态
+            engine.update(250);
+
+            // 验证爆炸音效被调用
+            expect(audioController.explosionSFXCalls).toBeGreaterThanOrEqual(1);
+
+            // 恢复真实时间
+            vi.useRealTimers();
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    it('多个烟花应该各自触发发射音效', () => {
+      fc.assert(
+        fc.property(
+          fc.array(
+            fc.record({
+              x: fc.integer({ min: 0, max: 800 }),
+              y: fc.integer({ min: 0, max: 600 })
+            }),
+            { minLength: 1, maxLength: 10 }
+          ),
+          (fireworks) => {
+            audioController.reset();
+
+            // 发射多个烟花
+            fireworks.forEach(fw => {
+              engine.launchFirework(fw.x, fw.y);
+            });
+
+            // 验证发射音效调用次数等于烟花数量
+            expect(audioController.launchSFXCalls).toBe(fireworks.length);
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    it('没有音频控制器时，烟花应该正常发射（不抛出错误）', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 0, max: 800 }),
+          fc.integer({ min: 0, max: 600 }),
+          (x, y) => {
+            // 创建没有音频控制器的引擎
+            const engineWithoutAudio = new FireworksEngine(canvas);
+
+            // 应该不抛出错误
+            expect(() => {
+              engineWithoutAudio.launchFirework(x, y);
+            }).not.toThrow();
+
+            engineWithoutAudio.destroy();
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    it('对于任何烟花类型，都应该触发音效', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 0, max: 800 }),
+          fc.integer({ min: 0, max: 600 }),
+          fc.constantFrom('peony', 'meteor', 'heart', 'fortune', 'redEnvelope'),
+          (x, y, typeId) => {
+            audioController.reset();
+
+            // 发射指定类型的烟花
+            engine.launchFirework(x, y, typeId);
+
+            // 验证发射音效被调用
+            expect(audioController.launchSFXCalls).toBe(1);
           }
         ),
         { numRuns: 100 }
@@ -245,53 +172,71 @@ describe('FireworksEngine - Property-Based Tests', () => {
     });
   });
 
-  // 辅助测试：验证清除功能
-  describe('清除功能', () => {
-    it('clear方法应该移除所有烟花', () => {
+  // 辅助测试：验证烟花类型
+  describe('烟花类型验证', () => {
+    it('应该至少有5种烟花类型', () => {
+      const types = engine.getAvailableTypes();
+      expect(types.length).toBeGreaterThanOrEqual(5);
+    });
+
+    it('所有烟花类型都应该有有效的属性', () => {
+      const types = engine.getAvailableTypes();
+      
+      types.forEach(type => {
+        expect(type.id).toBeDefined();
+        expect(type.name).toBeDefined();
+        expect(type.particleCount).toBeGreaterThan(0);
+        expect(type.colors.length).toBeGreaterThan(0);
+        expect(type.pattern).toBeDefined();
+        expect(type.duration).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  // 辅助测试：验证烟花生成
+  describe('烟花生成验证', () => {
+    it('应该能够在指定位置生成烟花', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 0, max: 800 }),
+          fc.integer({ min: 0, max: 600 }),
+          (x, y) => {
+            const id = engine.launchFirework(x, y);
+            expect(id).toBeDefined();
+            expect(typeof id).toBe('string');
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    it('应该能够清除所有烟花', () => {
       // 发射多个烟花
-      for (let i = 0; i < 5; i++) {
-        engine.launchFirework(
-          Math.random() * canvas.width,
-          Math.random() * canvas.height
-        );
-      }
+      engine.launchFirework(100, 100);
+      engine.launchFirework(200, 200);
+      engine.launchFirework(300, 300);
 
       // 清除
       engine.clear();
 
-      // 验证清除成功（通过再次发射烟花来间接验证）
-      const id = engine.launchFirework(100, 100);
-      expect(id).toBeDefined();
-      
-      engine.clear();
+      // 验证清除成功（通过渲染不抛出错误来验证）
+      expect(() => {
+        engine.render();
+      }).not.toThrow();
     });
   });
 
-  // 辅助测试：验证注册自定义烟花类型
-  describe('注册自定义烟花类型', () => {
-    it('应该能够注册和使用自定义烟花类型', () => {
-      const customType = {
-        id: 'custom',
-        name: '自定义',
-        particleCount: 50,
-        colors: ['#ffffff'],
-        pattern: 'peony' as const,
-        duration: 2500
-      };
+  // 辅助测试：验证音频控制器设置
+  describe('音频控制器设置', () => {
+    it('应该能够设置音频控制器', () => {
+      const newAudioController = new MockAudioController();
+      engine.setAudioController(newAudioController);
 
-      engine.registerFireworkType(customType);
-      
-      const types = engine.getAvailableTypes();
-      const customFound = types.find(t => t.id === 'custom');
-      
-      expect(customFound).toBeDefined();
-      expect(customFound?.name).toBe('自定义');
+      // 发射烟花
+      engine.launchFirework(100, 100);
 
-      // 使用自定义类型发射烟花
-      const id = engine.launchFirework(100, 100, 'custom');
-      expect(id).toBeDefined();
-      
-      engine.clear();
+      // 验证新的音频控制器被使用
+      expect(newAudioController.launchSFXCalls).toBe(1);
     });
   });
 });

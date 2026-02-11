@@ -72,22 +72,34 @@ export class FireworksEngine {
   private particlePool: ParticlePool = new ParticlePool();
   private animationId: number | null = null;
   private lastUpdateTime: number = 0;
+  private audioController: any | null = null; // AudioController类型
 
   /**
    * 构造函数
-   * 
+   *
    * @param canvas - Canvas元素
+   * @param audioController - 音频控制器（可选）
    */
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, audioController?: any) {
     this.canvas = canvas;
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       throw new Error('Failed to get 2D context');
     }
     this.ctx = ctx;
+    this.audioController = audioController || null;
 
     // 注册默认烟花类型
     this.registerDefaultFireworkTypes();
+  }
+
+  /**
+   * 设置音频控制器
+   *
+   * @param audioController - 音频控制器实例
+   */
+  setAudioController(audioController: any): void {
+    this.audioController = audioController;
   }
 
   /**
@@ -152,7 +164,7 @@ export class FireworksEngine {
 
   /**
    * 注册烟花类型
-   * 
+   *
    * @param type - 烟花类型
    */
   registerFireworkType(type: FireworkType): void {
@@ -161,7 +173,7 @@ export class FireworksEngine {
 
   /**
    * 获取所有可用烟花类型
-   * 
+   *
    * @returns 烟花类型数组
    */
   getAvailableTypes(): FireworkType[] {
@@ -170,14 +182,23 @@ export class FireworksEngine {
 
   /**
    * 在指定位置发射烟花
-   * 需求：3.1
-   * 
+   * 需求：3.1, 3.3
+   *
    * @param x - X坐标
    * @param y - Y坐标
    * @param typeId - 烟花类型ID（可选，随机选择）
    * @returns 烟花实例ID
    */
   launchFirework(x: number, y: number, typeId?: string): string {
+    // 播放发射音效
+    if (this.audioController) {
+      try {
+        this.audioController.playLaunchSFX();
+      } catch (error) {
+        console.warn('Failed to play launch SFX:', error);
+      }
+    }
+
     // 选择烟花类型
     let type: FireworkType;
     if (typeId && this.fireworkTypes.has(typeId)) {
@@ -214,7 +235,7 @@ export class FireworksEngine {
 
   /**
    * 创建粒子
-   * 
+   *
    * @param x - 中心X坐标
    * @param y - 中心Y坐标
    * @param type - 烟花类型
@@ -242,7 +263,7 @@ export class FireworksEngine {
 
   /**
    * 设置粒子速度（根据图案类型）
-   * 
+   *
    * @param particle - 粒子
    * @param index - 粒子索引
    * @param total - 总粒子数
@@ -326,7 +347,8 @@ export class FireworksEngine {
 
   /**
    * 更新所有烟花状态
-   * 
+   * 需求：3.4
+   *
    * @param deltaTime - 时间增量（毫秒）
    */
   update(deltaTime: number): void {
@@ -335,12 +357,22 @@ export class FireworksEngine {
     for (let i = this.fireworks.length - 1; i >= 0; i--) {
       const firework = this.fireworks[i];
       const elapsed = Date.now() - firework.startTime;
+      const previousState = firework.state;
 
       // 更新状态
       if (elapsed < 200) {
         firework.state = 'launching';
       } else if (elapsed < firework.type.duration * 0.7) {
         firework.state = 'exploding';
+
+        // 播放爆炸音效（仅在状态转换时播放一次）
+        if (previousState === 'launching' && this.audioController) {
+          try {
+            this.audioController.playExplosionSFX();
+          } catch (error) {
+            console.warn('Failed to play explosion SFX:', error);
+          }
+        }
       } else if (elapsed < firework.type.duration) {
         firework.state = 'fading';
       } else {
@@ -439,3 +471,4 @@ export class FireworksEngine {
     this.clear();
   }
 }
+
