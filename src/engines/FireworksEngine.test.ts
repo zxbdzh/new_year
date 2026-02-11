@@ -239,4 +239,42 @@ describe('FireworksEngine - Property-Based Tests', () => {
       expect(newAudioController.launchSFXCalls).toBe(1);
     });
   });
+
+  // 连击特效测试
+  describe('连击特效测试', () => {
+    it('应该在2倍连击时发射双倍烟花', () => {
+      const ids = engine.launchComboFireworks(200, 200, 2);
+      
+      expect(ids.length).toBe(2);
+    });
+
+    it('应该在3倍连击时发射三倍烟花', () => {
+      const ids = engine.launchComboFireworks(200, 200, 3);
+      
+      expect(ids.length).toBe(3);
+    });
+
+    it('应该在5倍连击时触发烟花雨（不返回ID）', () => {
+      // 烟花雨使用setTimeout异步发射，不返回ID
+      const ids = engine.launchComboFireworks(200, 200, 5);
+      
+      expect(ids.length).toBe(0);
+    });
+
+    it('应该能够直接调用烟花雨效果', () => {
+      // 不应该抛出错误
+      expect(() => {
+        engine.launchFireworkRain(200, 200);
+      }).not.toThrow();
+    });
+
+    it('应该在不同倍数下返回正确数量的烟花', () => {
+      expect(engine.launchComboFireworks(200, 200, 1).length).toBe(0);
+      expect(engine.launchComboFireworks(200, 200, 2).length).toBe(2);
+      expect(engine.launchComboFireworks(200, 200, 3).length).toBe(3);
+      expect(engine.launchComboFireworks(200, 200, 4).length).toBe(3);
+      expect(engine.launchComboFireworks(200, 200, 5).length).toBe(0);
+      expect(engine.launchComboFireworks(200, 200, 10).length).toBe(0);
+    });
+  });
 });

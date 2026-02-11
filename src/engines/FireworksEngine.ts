@@ -181,6 +181,101 @@ export class FireworksEngine {
   }
 
   /**
+   * 发射连击增强烟花
+   * 需求：3.6
+   *
+   * @param x - X坐标
+   * @param y - Y坐标
+   * @param multiplier - 连击倍数
+   * @returns 烟花实例ID数组
+   */
+  launchComboFireworks(x: number, y: number, multiplier: number): string[] {
+    const ids: string[] = [];
+
+    if (multiplier >= 5) {
+      // 6次以上：烟花雨效果（最高优先级）
+      this.launchFireworkRain(x, y);
+    } else if (multiplier >= 3) {
+      // 4-5次点击：三倍烟花 + 彩色光环
+      ids.push(this.launchFirework(x, y - 40));
+      ids.push(this.launchFirework(x - 35, y + 20));
+      ids.push(this.launchFirework(x + 35, y + 20));
+      this.renderColorfulHalo(x, y);
+    } else if (multiplier >= 2) {
+      // 2-3次点击：双倍烟花
+      ids.push(this.launchFirework(x - 30, y));
+      ids.push(this.launchFirework(x + 30, y));
+    }
+
+    return ids;
+  }
+
+  /**
+   * 发射烟花雨效果
+   * 需求：3.6
+   *
+   * @param centerX - 中心X坐标
+   * @param centerY - 中心Y坐标
+   */
+  launchFireworkRain(centerX: number, centerY: number): void {
+    const rainCount = 20;
+    const spreadRadius = 200;
+
+    for (let i = 0; i < rainCount; i++) {
+      setTimeout(() => {
+        // 在中心点周围随机位置发射烟花
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * spreadRadius;
+        const x = centerX + Math.cos(angle) * distance;
+        const y = centerY + Math.sin(angle) * distance * 0.5; // Y轴压缩，更自然
+
+        this.launchFirework(x, y);
+      }, i * 200); // 每200ms发射一个
+    }
+  }
+
+  /**
+   * 渲染彩色光环效果
+   * 需求：3.6
+   *
+   * @param x - 中心X坐标
+   * @param y - 中心Y坐标
+   */
+  private renderColorfulHalo(x: number, y: number): void {
+    const startTime = Date.now();
+    const duration = 1000; // 1秒
+
+    const animateHalo = () => {
+      const elapsed = Date.now() - startTime;
+      if (elapsed > duration) return;
+
+      const progress = elapsed / duration;
+      const radius = 50 + progress * 100;
+      const alpha = 1 - progress;
+
+      this.ctx.save();
+      this.ctx.globalAlpha = alpha;
+      
+      // 绘制多层彩色光环
+      const colors = ['#ff0000', '#ff6600', '#ffcc00', '#00ff00', '#0099ff', '#9933ff'];
+      for (let i = 0; i < colors.length; i++) {
+        const r = radius + i * 10;
+        this.ctx.strokeStyle = colors[i];
+        this.ctx.lineWidth = 3;
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, r, 0, Math.PI * 2);
+        this.ctx.stroke();
+      }
+
+      this.ctx.restore();
+
+      requestAnimationFrame(animateHalo);
+    };
+
+    animateHalo();
+  }
+
+  /**
    * 在指定位置发射烟花
    * 需求：3.1, 3.3
    *
@@ -232,6 +327,7 @@ export class FireworksEngine {
 
     return id;
   }
+
 
   /**
    * 创建粒子
