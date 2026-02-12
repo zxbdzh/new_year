@@ -13,27 +13,49 @@
 
 ## 技术栈
 
-- **前端**: React 19 + TypeScript + Vite 8
+### 前端
+- **框架**: React 19 + TypeScript
+- **构建工具**: Vite 8
 - **状态管理**: Redux Toolkit
 - **渲染**: Canvas 2D API / WebGL
-- **实时通信**: Socket.io
+- **实时通信**: Socket.io Client
 - **音频**: Web Audio API
 - **存储**: IndexedDB
 - **测试**: Vitest + fast-check (属性测试)
 
+### 后端
+- **运行时**: Node.js 18+
+- **框架**: Express 4.18.2
+- **WebSocket**: Socket.io 4.8.3
+- **语言**: TypeScript 5.3.3
+- **开发工具**: tsx 4.7.0
+
 ## 快速开始
 
-### 安装依赖
+### 前端开发
 
 ```cmd
+# 安装依赖
 pnpm install
-```
 
-### 开发
-
-```cmd
+# 启动开发服务器
 pnpm dev
 ```
+
+### 后端开发
+
+```cmd
+# 进入server目录
+cd server
+
+# 安装依赖
+pnpm install
+
+# 启动WebSocket服务器
+pnpm dev
+```
+
+详细的服务器安装和配置说明请参考 [server/INSTALL.md](server/INSTALL.md)。
 
 ### 构建
 
