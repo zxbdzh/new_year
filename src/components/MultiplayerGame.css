@@ -20,12 +20,19 @@
   z-index: 100;
 }
 
-/* 在线人数显示 */
-.multiplayer-online-count {
+/* 在线人数和设置按钮容器 */
+.multiplayer-header {
   position: absolute;
   top: 20px;
   right: 20px;
   z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 在线人数显示 */
+.multiplayer-online-count {
   background: rgba(0, 0, 0, 0.7);
   color: #fff;
   padding: 10px 20px;
@@ -37,6 +44,27 @@
   gap: 8px;
   border: 2px solid #ffd700;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.settings-button {
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffd700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.settings-button:hover {
+  background: rgba(255, 215, 0, 0.2);
+  transform: scale(1.1);
 }
 
 .online-icon {
@@ -156,15 +184,25 @@
     top: 10px;
   }
 
-  .multiplayer-online-count {
+  .multiplayer-header {
     top: 10px;
     right: 10px;
+    gap: 8px;
+  }
+
+  .multiplayer-online-count {
     padding: 8px 15px;
     font-size: 14px;
   }
 
   .online-icon {
     font-size: 16px;
+  }
+
+  .settings-button {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
   }
 
   .multiplayer-leaderboard {

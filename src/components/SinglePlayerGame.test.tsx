@@ -191,8 +191,8 @@ describe('SinglePlayerGame', () => {
     const settingsButton = screen.getByLabelText('设置');
     fireEvent.click(settingsButton);
 
-    // 关闭设置
-    const closeButton = screen.getByText('关闭');
+    // 关闭设置 (使用aria-label)
+    const closeButton = screen.getByLabelText('关闭');
     fireEvent.click(closeButton);
 
     // 检查设置对话框是否隐藏

@@ -6,12 +6,14 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { CountdownDisplay } from './CountdownDisplay';
+import { SettingsScreen, type SettingsData } from './SettingsScreen';
 import { CountdownEngine } from '../engines/CountdownEngine';
 import { FireworksEngine } from '../engines/FireworksEngine';
 import { ComboSystem } from '../engines/ComboSystem';
 import { AudioController } from '../services/AudioController';
 import { StatisticsTracker } from '../services/StatisticsTracker';
 import { StorageService } from '../services/StorageService';
+import { PerformanceOptimizer } from '../services/PerformanceOptimizer';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { updateCombo, resetCombo } from '../store/gameSlice';
 import { recordClick, recordCombo } from '../store/statisticsSlice';
@@ -43,6 +45,8 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
   const comboSystemRef = useRef<ComboSystem | null>(null);
   const audioControllerRef = useRef<AudioController | null>(null);
   const statisticsTrackerRef = useRef<StatisticsTracker | null>(null);
+  const performanceOptimizerRef = useRef<PerformanceOptimizer | null>(null);
+  const storageServiceRef = useRef<StorageService | null>(null);
   
   // 游戏时间追踪
   const gameStartTimeRef = useRef<number>(Date.now());
@@ -64,6 +68,11 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
       try {
         // 创建存储服务
         const storageService = new StorageService();
+        storageServiceRef.current = storageService;
+        
+        // 创建性能优化器
+        const performanceOptimizer = new PerformanceOptimizer();
+        performanceOptimizerRef.current = performanceOptimizer;
         
         // 创建音频控制器
         const audioController = new AudioController(storageService);
@@ -254,6 +263,54 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
     setShowSettings(false);
   }, []);
 
+  // 保存设置
+  const handleSaveSettings = useCallback(async (settings: SettingsData) => {
+    try {
+      // 应用音频设置
+      if (audioControllerRef.current) {
+        audioControllerRef.current.setMusicVolume(settings.musicVolume);
+        audioControllerRef.current.setSFXVolume(settings.sfxVolume);
+        await audioControllerRef.current.saveConfig();
+      }
+
+      // 应用倒计时偏移
+      if (countdownEngineRef.current) {
+        countdownEngineRef.current.setManualOffset(settings.manualOffset);
+      }
+
+      // 应用性能设置
+      if (performanceOptimizerRef.current && fireworksEngineRef.current) {
+        const profile = performanceOptimizerRef.current.getProfile();
+        profile.level = settings.performanceLevel;
+        performanceOptimizerRef.current.setProfile(profile);
+        
+        // 更新烟花引擎的性能配置
+        fireworksEngineRef.current.updatePerformanceProfile(profile);
+      }
+
+      // 保存到本地存储
+      if (storageServiceRef.current) {
+        const data = await storageServiceRef.current.load();
+        if (data) {
+          data.themeId = settings.themeId;
+          data.skinId = settings.skinId;
+          data.performanceProfile = {
+            level: settings.performanceLevel,
+            maxParticles: 100,
+            maxFireworks: 5,
+            useWebGL: false,
+            particleSize: 3,
+            enableGlow: true,
+            enableTrails: false,
+          };
+          await storageServiceRef.current.save(data);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+    }
+  }, []);
+
   // 重新开始游戏
   const handleRestart = useCallback(() => {
     // 清除烟花
@@ -362,29 +419,12 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
         </button>
       </div>
 
-      {/* 设置对话框 */}
-      {showSettings && (
-        <div className="settings-overlay" onClick={handleCloseSettings}>
-          <div className="settings-dialog" onClick={(e) => e.stopPropagation()}>
-            <h3 className="settings-title">游戏设置</h3>
-            
-            <div className="settings-content">
-              <p className="settings-info">
-                音频和其他设置功能即将推出
-              </p>
-            </div>
-            
-            <div className="settings-actions">
-              <button
-                className="settings-button settings-button-close"
-                onClick={handleCloseSettings}
-              >
-                关闭
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 设置界面 */}
+      <SettingsScreen
+        isOpen={showSettings}
+        onClose={handleCloseSettings}
+        onSave={handleSaveSettings}
+      />
     </div>
   );
 }

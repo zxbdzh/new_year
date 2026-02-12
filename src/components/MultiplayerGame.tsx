@@ -15,9 +15,13 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { CountdownDisplay } from './CountdownDisplay';
-import { PlayerNotification, NotificationItem } from './PlayerNotification';
+import { PlayerNotification, type NotificationItem } from './PlayerNotification';
+import { SettingsScreen, type SettingsData } from './SettingsScreen';
 import { FireworksEngine } from '../engines/FireworksEngine';
 import { NetworkSynchronizer } from '../services/NetworkSynchronizer';
+import { StorageService } from '../services/StorageService';
+import { PerformanceOptimizer } from '../services/PerformanceOptimizer';
+import { CountdownEngine } from '../engines/CountdownEngine';
 import type { FireworkAction, RoomInfo, PlayerInfo } from '../types/NetworkTypes';
 import './MultiplayerGame.css';
 
@@ -43,10 +47,14 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<FireworksEngine | null>(null);
+  const countdownEngineRef = useRef<CountdownEngine | null>(null);
+  const performanceOptimizerRef = useRef<PerformanceOptimizer | null>(null);
+  const storageServiceRef = useRef<StorageService | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
   const [leaderboard, setLeaderboard] = useState<PlayerInfo[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   /**
    * 初始化烟花引擎
@@ -55,6 +63,22 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
     if (!canvasRef.current || isInitialized) return;
 
     try {
+      // 创建存储服务
+      const storageService = new StorageService();
+      storageServiceRef.current = storageService;
+
+      // 创建性能优化器
+      const performanceOptimizer = new PerformanceOptimizer();
+      performanceOptimizerRef.current = performanceOptimizer;
+
+      // 创建倒计时引擎
+      const countdownEngine = new CountdownEngine({
+        targetDate: CountdownEngine.getNextLunarNewYear(),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        manualOffset: 0,
+      });
+      countdownEngineRef.current = countdownEngine;
+
       // 创建烟花引擎
       const engine = new FireworksEngine(canvasRef.current, audioController);
       engineRef.current = engine;
@@ -69,6 +93,10 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
       if (engineRef.current) {
         engineRef.current.destroy();
         engineRef.current = null;
+      }
+      if (countdownEngineRef.current) {
+        countdownEngineRef.current.destroy();
+        countdownEngineRef.current = null;
       }
     };
   }, [audioController, isInitialized]);
@@ -200,6 +228,70 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
   }, [networkSynchronizer, onExit]);
 
   /**
+   * 打开设置
+   */
+  const handleOpenSettings = useCallback(() => {
+    setShowSettings(true);
+  }, []);
+
+  /**
+   * 关闭设置
+   */
+  const handleCloseSettings = useCallback(() => {
+    setShowSettings(false);
+  }, []);
+
+  /**
+   * 保存设置
+   */
+  const handleSaveSettings = useCallback(async (settings: SettingsData) => {
+    try {
+      // 应用音频设置
+      if (audioController) {
+        audioController.setMusicVolume(settings.musicVolume);
+        audioController.setSFXVolume(settings.sfxVolume);
+        await audioController.saveConfig();
+      }
+
+      // 应用倒计时偏移
+      if (countdownEngineRef.current) {
+        countdownEngineRef.current.setManualOffset(settings.manualOffset);
+      }
+
+      // 应用性能设置
+      if (performanceOptimizerRef.current && engineRef.current) {
+        const profile = performanceOptimizerRef.current.getProfile();
+        profile.level = settings.performanceLevel;
+        performanceOptimizerRef.current.setProfile(profile);
+        
+        // 更新烟花引擎的性能配置
+        engineRef.current.updatePerformanceProfile(profile);
+      }
+
+      // 保存到本地存储
+      if (storageServiceRef.current) {
+        const data = await storageServiceRef.current.load();
+        if (data) {
+          data.themeId = settings.themeId;
+          data.skinId = settings.skinId;
+          data.performanceProfile = {
+            level: settings.performanceLevel,
+            maxParticles: 100,
+            maxFireworks: 5,
+            useWebGL: false,
+            particleSize: 3,
+            enableGlow: true,
+            enableTrails: false,
+          };
+          await storageServiceRef.current.save(data);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+    }
+  }, [audioController]);
+
+  /**
    * 调整Canvas尺寸
    */
   useEffect(() => {
@@ -226,15 +318,28 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
     <div className="multiplayer-game">
       {/* 倒计时显示 */}
       <div className="multiplayer-countdown">
-        <CountdownDisplay />
+        {countdownEngineRef.current && (
+          <CountdownDisplay engine={countdownEngineRef.current} />
+        )}
       </div>
 
-      {/* 在线人数显示 */}
-      <div className="multiplayer-online-count">
-        <span className="online-icon">👥</span>
-        <span className="online-text">
-          在线: {roomInfo?.players.length || 0}/{roomInfo?.maxPlayers || 20}
-        </span>
+      {/* 在线人数和设置按钮 */}
+      <div className="multiplayer-header">
+        <div className="multiplayer-online-count">
+          <span className="online-icon">👥</span>
+          <span className="online-text">
+            在线: {roomInfo?.players.length || 0}/{roomInfo?.maxPlayers || 20}
+          </span>
+        </div>
+        
+        <button
+          className="control-button settings-button"
+          onClick={handleOpenSettings}
+          aria-label="设置"
+          title="设置"
+        >
+          ⚙️
+        </button>
       </div>
 
       {/* 排行榜显示 */}
@@ -270,6 +375,13 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
           退出房间
         </button>
       </div>
+
+      {/* 设置界面 */}
+      <SettingsScreen
+        isOpen={showSettings}
+        onClose={handleCloseSettings}
+        onSave={handleSaveSettings}
+      />
     </div>
   );
 };

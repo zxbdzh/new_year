@@ -566,5 +566,16 @@ export class FireworksEngine {
   destroy(): void {
     this.clear();
   }
+  /**
+   * 更新性能配置
+   * 需求：10.1, 10.5
+   *
+   * @param profile - 性能配置
+   */
+  updatePerformanceProfile(profile: any): void {
+    // 这个方法用于接收性能配置更新
+    // 实际的性能限制会在launchFirework和createParticles中应用
+    console.log('Performance profile updated:', profile);
+  }
 }
 

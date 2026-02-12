@@ -168,6 +168,113 @@ const countdownEngine = useMemo(() => {
 - 校准对话框（模态覆盖层）
 - 响应式字体大小
 
+### SettingsScreen（设置界面）
+**文件**: `SettingsScreen.tsx`, `SettingsScreen.css`
+
+**功能**:
+- 音频设置（音乐/音效音量、独立静音控制）
+- 主题设置（背景主题、倒计时皮肤选择）
+- 性能设置（低/中/高画质配置）
+- 倒计时校准（手动时间偏移）
+- 实时预览（音量调整立即生效）
+- 设置持久化（保存到本地存储）
+
+**Props**:
+- `isOpen: boolean` - 是否显示设置界面
+- `onClose: () => void` - 关闭回调
+- `onSave: (settings: SettingsData) => void` - 保存回调
+
+**SettingsData接口**:
+```typescript
+interface SettingsData {
+  musicVolume: number;           // 音乐音量 (0-1)
+  sfxVolume: number;             // 音效音量 (0-1)
+  musicMuted: boolean;           // 音乐静音状态
+  sfxMuted: boolean;             // 音效静音状态
+  themeId: string;               // 主题ID
+  skinId: string;                // 皮肤ID
+  performanceLevel: 'low' | 'medium' | 'high';  // 性能级别
+  manualOffset: number;          // 手动时间偏移（秒）
+}
+```
+
+**需求**: 2.5, 6.3, 6.5, 6.6
+
+**特性**:
+- 模态对话框设计（点击遮罩层关闭）
+- Redux集成（实时同步状态）
+- 本地状态管理（支持取消操作）
+- 响应式布局（适配移动设备）
+- 音量滑块（0-100%显示）
+- 主题预览（颜色块显示）
+
+**使用示例**:
+```tsx
+import { SettingsScreen } from './components/SettingsScreen';
+
+const [showSettings, setShowSettings] = useState(false);
+
+const handleSaveSettings = async (settings: SettingsData) => {
+  // 应用音频设置
+  if (audioController) {
+    audioController.setMusicVolume(settings.musicVolume);
+    audioController.setSFXVolume(settings.sfxVolume);
+    await audioController.saveConfig();
+  }
+
+  // 应用倒计时偏移
+  if (countdownEngine) {
+    countdownEngine.setManualOffset(settings.manualOffset);
+  }
+
+  // 应用性能设置
+  if (performanceOptimizer && fireworksEngine) {
+    const profile = performanceOptimizer.getProfile();
+    profile.level = settings.performanceLevel;
+    performanceOptimizer.setProfile(profile);
+    fireworksEngine.updatePerformanceProfile(profile);
+  }
+
+  // 保存到本地存储
+  if (storageService) {
+    const data = await storageService.load();
+    if (data) {
+      data.themeId = settings.themeId;
+      data.skinId = settings.skinId;
+      data.performanceProfile = { level: settings.performanceLevel, ... };
+      await storageService.save(data);
+    }
+  }
+};
+
+<SettingsScreen
+  isOpen={showSettings}
+  onClose={() => setShowSettings(false)}
+  onSave={handleSaveSettings}
+/>
+```
+
+**状态管理**:
+- 使用Redux Selector获取当前配置
+- 使用Redux Dispatch更新全局状态
+- 本地状态用于实时预览和取消操作
+- 取消时恢复原始Redux状态
+
+**样式特性**:
+- 模态遮罩层（半透明黑色背景）
+- 渐变背景（深色主题）
+- 分组设置区域（音频、主题、性能、校准）
+- 音量控制（滑块+静音按钮）
+- 主题选择器（颜色预览+名称）
+- 性能选择器（三档配置+描述）
+- 响应式设计（移动端优化）
+
+**集成说明**:
+- 已集成到`SinglePlayerGame`和`MultiplayerGame`组件
+- 通过设置按钮（⚙️图标）打开
+- 保存后立即应用所有设置
+- 取消时恢复原始状态
+
 ## 下一步
 
-任务17.2将实现倒计时归零触发和新年祝福动画的集成测试。
+任务24.2已完成设置界面的集成。接下来将实现移动端优化（任务25）。
