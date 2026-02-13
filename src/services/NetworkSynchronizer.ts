@@ -97,6 +97,23 @@ export class NetworkSynchronizer {
   }
 
   /**
+   * 检查服务器是否可用
+   * 尝试建立连接来验证服务器可达性
+   */
+  async checkServerAvailability(): Promise<boolean> {
+    try {
+      // 尝试连接到服务器
+      await this.connect();
+      // 连接成功，断开连接
+      this.disconnect();
+      return true;
+    } catch (error) {
+      console.warn('[NetworkSynchronizer] 服务器不可用:', error);
+      return false;
+    }
+  }
+
+  /**
    * 连接到服务器
    */
   async connect(): Promise<void> {

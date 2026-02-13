@@ -320,11 +320,6 @@ export class FireworksEngine {
 
     this.fireworks.push(firework);
 
-    // 如果动画未运行，启动动画循环
-    if (this.animationId === null) {
-      this.startAnimation();
-    }
-
     return id;
   }
 
@@ -417,7 +412,10 @@ export class FireworksEngine {
   /**
    * 启动动画循环
    */
-  private startAnimation(): void {
+  startAnimation(): void {
+    if (this.animationId !== null) {
+      return; // 已经在运行
+    }
     this.lastUpdateTime = Date.now();
     this.animationId = requestAnimationFrame(() => this.animate());
   }

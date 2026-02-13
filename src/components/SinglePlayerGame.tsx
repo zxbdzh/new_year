@@ -97,6 +97,8 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
         if (canvasRef.current) {
           const fireworksEngine = new FireworksEngine(canvasRef.current, audioController);
           fireworksEngineRef.current = fireworksEngine;
+          // 启动动画循环（即使没有烟花也保持canvas清空）
+          fireworksEngine.startAnimation();
         }
         
         // 创建连击系统
@@ -378,7 +380,15 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
             aria-label={audioConfig.musicMuted ? '取消静音' : '静音'}
             title={audioConfig.musicMuted ? '取消静音' : '静音'}
           >
-            {audioConfig.musicMuted ? '🔇' : '🔊'}
+            {audioConfig.musicMuted ? (
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 4L6 8H2v4h4l4 4V4zm6 2l-2 2 2 2-2 2 2 2 2-2-2-2 2-2-2-2z"/>
+              </svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 4L6 8H2v4h4l4 4V4zm4 6c0-1.5-1-3-2-3.5v7c1-.5 2-2 2-3.5zm2 0c0-2.5-1.5-4.5-3.5-5.5v11c2-.5 3.5-3 3.5-5.5z"/>
+              </svg>
+            )}
           </button>
           
           <button
@@ -387,7 +397,9 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
             aria-label="设置"
             title="设置"
           >
-            ⚙️
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 6c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm8-1l-2-1-1-2-2 1-2-1-2 1-1 2-2 1v2l2 1 1 2 2-1 2 1 2-1 1-2 2-1V5z"/>
+            </svg>
           </button>
         </div>
       </div>
@@ -407,7 +419,10 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
           onClick={handleRestart}
           aria-label="重新开始"
         >
-          🔄 重新开始
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ verticalAlign: 'middle', marginRight: '4px' }}>
+            <path d="M8 2a6 6 0 1 0 6 6h-2a4 4 0 1 1-4-4V2zm0-2v4l4-4-4-4z"/>
+          </svg>
+          重新开始
         </button>
         
         <button
@@ -415,7 +430,10 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
           onClick={handleExit}
           aria-label="退出游戏"
         >
-          🚪 退出
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ verticalAlign: 'middle', marginRight: '4px' }}>
+            <path d="M6 2v2H2v8h4v2H0V2h6zm4 0l6 6-6 6v-4H6V6h4V2z"/>
+          </svg>
+          退出
         </button>
       </div>
 

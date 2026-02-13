@@ -34,6 +34,7 @@ function App() {
   const [hasStarted, setHasStarted] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isServerAvailable, setIsServerAvailable] = useState(false);
   
   // 服务实例引用
   const audioControllerRef = useRef<AudioController | null>(null);
@@ -60,7 +61,11 @@ function App() {
         const networkSynchronizer = new NetworkSynchronizer(serverUrl);
         networkSynchronizerRef.current = networkSynchronizer;
 
-        console.log('[App] 服务初始化完成');
+        // 检查服务器可用性
+        const serverAvailable = await networkSynchronizer.checkServerAvailability();
+        setIsServerAvailable(serverAvailable);
+
+        console.log('[App] 服务初始化完成, 服务器可用:', serverAvailable);
       } catch (error) {
         console.error('[App] 服务初始化失败:', error);
       }
@@ -139,15 +144,20 @@ function App() {
    * 处理静音切换
    */
   const handleToggleMute = useCallback(() => {
+    // 先更新Redux状态
     dispatch(toggleMusicMute());
     
     if (audioControllerRef.current) {
+      // 切换AudioController的静音状态
       audioControllerRef.current.toggleMusicMute();
       
-      // 如果取消静音，播放音乐
+      // 根据切换后的状态决定播放或停止
+      // isMusicMuted是切换前的状态，所以逻辑相反
       if (isMusicMuted) {
+        // 之前是静音，现在取消静音，播放音乐
         audioControllerRef.current.playMusic();
       } else {
+        // 之前是未静音，现在静音了，停止音乐
         audioControllerRef.current.stopMusic();
       }
     }
@@ -239,7 +249,7 @@ function App() {
           onSelectMode={handleSelectMode}
           onToggleMute={handleToggleMute}
           isMuted={isMusicMuted}
-          isOnline={navigator.onLine}
+          isOnline={isServerAvailable}
         />
       </div>
     );

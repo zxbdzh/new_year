@@ -69,7 +69,11 @@ export function ModeSelection({
           tabIndex={0}
           aria-label="选择单人模式"
         >
-          <div className="card-icon" aria-hidden="true">🎆</div>
+          <div className="card-icon" aria-hidden="true">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="currentColor">
+              <path d="M24 4l4 12h12l-10 8 4 12-10-8-10 8 4-12-10-8h12z"/>
+            </svg>
+          </div>
           <h3 className="card-title">单人模式</h3>
           <p className="card-description">
             独自享受烟花盛宴
@@ -96,7 +100,14 @@ export function ModeSelection({
           aria-label={isOnline ? '选择多人模式' : '多人模式（网络离线不可用）'}
           aria-disabled={!isOnline}
         >
-          <div className="card-icon" aria-hidden="true">🎇</div>
+          <div className="card-icon" aria-hidden="true">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="currentColor">
+              <circle cx="16" cy="12" r="6"/>
+              <circle cx="32" cy="12" r="6"/>
+              <path d="M16 20c-5 0-9 4-9 9v3h18v-3c0-5-4-9-9-9z"/>
+              <path d="M32 20c-5 0-9 4-9 9v3h18v-3c0-5-4-9-9-9z"/>
+            </svg>
+          </div>
           <h3 className="card-title">多人模式</h3>
           <p className="card-description">
             与好友共庆新年
@@ -110,7 +121,12 @@ export function ModeSelection({
           </div>
           {!isOnline && (
             <div className="card-overlay">
-              <span className="offline-notice">📡 网络离线</span>
+              <span className="offline-notice">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" style={{ verticalAlign: 'middle', marginRight: '4px' }}>
+                  <path d="M0 8l2-2 2 2-2 2-2-2zm6-4l2-2 2 2-2 2-2-2zm4 8l2-2 2 2-2 2-2-2z"/>
+                </svg>
+                网络离线
+              </span>
             </div>
           )}
           <div className="card-glow"></div>
@@ -123,7 +139,17 @@ export function ModeSelection({
         onClick={onToggleMute}
         aria-label={isMuted ? '取消静音' : '静音'}
       >
-        <span className="mute-icon">{isMuted ? '🔇' : '🔊'}</span>
+        <span className="mute-icon">
+          {isMuted ? (
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 4L6 8H2v4h4l4 4V4zm6 2l-2 2 2 2-2 2 2 2 2-2-2-2 2-2-2-2z"/>
+            </svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 4L6 8H2v4h4l4 4V4zm4 6c0-1.5-1-3-2-3.5v7c1-.5 2-2 2-3.5zm2 0c0-2.5-1.5-4.5-3.5-5.5v11c2-.5 3.5-3 3.5-5.5z"/>
+            </svg>
+          )}
+        </span>
         <span className="mute-text">{isMuted ? '已静音' : '音乐开启'}</span>
       </button>
     </div>
