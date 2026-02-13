@@ -18,13 +18,17 @@ import './GameEndScreen.css';
 interface GameEndScreenProps {
   /** 是否显示 */
   show: boolean;
+  /** 再玩一次回调 */
+  onPlayAgain?: () => void;
+  /** 退出回调 */
+  onExit?: () => void;
 }
 
 /**
  * 游戏结束界面组件
  * 显示新年祝福并提供"再玩一次"和"退出"选项
  */
-export function GameEndScreen({ show }: GameEndScreenProps) {
+export function GameEndScreen({ show, onPlayAgain, onExit }: GameEndScreenProps) {
   const dispatch = useAppDispatch();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<FireworksEngine | null>(null);
@@ -91,17 +95,25 @@ export function GameEndScreen({ show }: GameEndScreenProps) {
 
   // 处理"再玩一次"按钮
   const handlePlayAgain = () => {
-    // 重置游戏状态但保留统计数据
-    dispatch(resetGame());
-    // 返回模式选择界面
-    dispatch(setMode('menu'));
+    if (onPlayAgain) {
+      onPlayAgain();
+    } else {
+      // 默认行为：重置游戏状态但保留统计数据
+      dispatch(resetGame());
+      // 返回模式选择界面
+      dispatch(setMode('menu'));
+    }
   };
 
   // 处理"退出"按钮
   const handleExit = () => {
-    // 保存数据并返回启动界面
-    dispatch(resetGame());
-    dispatch(setMode('menu'));
+    if (onExit) {
+      onExit();
+    } else {
+      // 默认行为：保存数据并返回启动界面
+      dispatch(resetGame());
+      dispatch(setMode('menu'));
+    }
   };
 
   return (

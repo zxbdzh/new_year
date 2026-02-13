@@ -1,123 +1,347 @@
-import { useState, useMemo } from 'react';
+/**
+ * 主应用组件
+ * Feature: new-year-fireworks-game
+ * 需求：1.6, 8.4, 8.5
+ * 
+ * 实现完整的游戏流程：
+ * 启动界面 → 模式选择 → 游戏界面 → 结束界面
+ */
+
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { setMode } from './store/gameSlice';
 import { toggleMusicMute } from './store/audioSlice';
 import { LaunchScreen } from './components/LaunchScreen';
 import { ModeSelection } from './components/ModeSelection';
-import { CountdownDisplay } from './components/CountdownDisplay';
+import { SinglePlayerGame } from './components/SinglePlayerGame';
+import { MultiplayerGame } from './components/MultiplayerGame';
 import { GameEndScreen } from './components/GameEndScreen';
-import { CountdownEngine } from './engines/CountdownEngine';
+import { NetworkSynchronizer } from './services/NetworkSynchronizer';
+import { AudioController } from './services/AudioController';
+import { StorageService } from './services/StorageService';
 import type { GameMode } from './types/GameTypes';
 import './App.css';
 
+/**
+ * 主应用组件
+ */
 function App() {
   const dispatch = useAppDispatch();
   const mode = useAppSelector((state) => state.game.mode);
   const isMusicMuted = useAppSelector((state) => state.audio.config.musicMuted);
+  
+  // 应用状态
   const [hasStarted, setHasStarted] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  
+  // 服务实例引用
+  const audioControllerRef = useRef<AudioController | null>(null);
+  const networkSynchronizerRef = useRef<NetworkSynchronizer | null>(null);
+  const storageServiceRef = useRef<StorageService | null>(null);
 
-  // 创建倒计时引擎实例（仅创建一次）
-  const countdownEngine = useMemo(() => {
-    const targetDate = CountdownEngine.getNextLunarNewYear();
-    return new CountdownEngine({
-      targetDate,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      manualOffset: 0,
-    });
+  /**
+   * 初始化服务
+   */
+  useEffect(() => {
+    const initializeServices = async () => {
+      try {
+        // 创建存储服务
+        const storageService = new StorageService();
+        storageServiceRef.current = storageService;
+
+        // 创建音频控制器
+        const audioController = new AudioController(storageService);
+        await audioController.initialize();
+        audioControllerRef.current = audioController;
+
+        // 创建网络同步器（使用环境变量或默认值）
+        const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+        const networkSynchronizer = new NetworkSynchronizer(serverUrl);
+        networkSynchronizerRef.current = networkSynchronizer;
+
+        console.log('[App] 服务初始化完成');
+      } catch (error) {
+        console.error('[App] 服务初始化失败:', error);
+      }
+    };
+
+    initializeServices();
+
+    // 清理函数
+    return () => {
+      if (audioControllerRef.current) {
+        audioControllerRef.current.destroy();
+      }
+      if (networkSynchronizerRef.current) {
+        networkSynchronizerRef.current.disconnect();
+      }
+    };
   }, []);
 
-  const handleStart = () => {
-    setHasStarted(true);
-  };
+  /**
+   * 处理页面卸载前保存
+   */
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // 如果正在游戏中，提示用户
+      if (mode === 'single' || mode === 'multiplayer') {
+        e.preventDefault();
+        e.returnValue = '确定要离开吗？游戏进度将会丢失。';
+      }
+    };
 
-  const handleAudioUnlock = () => {
-    // 这里将来会调用 AudioController.resumeContext()
-    console.log('Audio unlocked - ready to play music');
-  };
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
-  const handleSelectMode = (selectedMode: GameMode) => {
-    dispatch(setMode(selectedMode));
-  };
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [mode]);
 
-  const handleToggleMute = () => {
+  /**
+   * 处理启动
+   */
+  const handleStart = useCallback(() => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setHasStarted(true);
+      dispatch(setMode('menu'));
+      setIsTransitioning(false);
+    }, 300);
+  }, [dispatch]);
+
+  /**
+   * 处理音频解锁
+   */
+  const handleAudioUnlock = useCallback(async () => {
+    if (audioControllerRef.current) {
+      try {
+        await audioControllerRef.current.resumeContext();
+        console.log('[App] 音频已解锁');
+      } catch (error) {
+        console.error('[App] 音频解锁失败:', error);
+      }
+    }
+  }, []);
+
+  /**
+   * 处理模式选择
+   */
+  const handleSelectMode = useCallback((selectedMode: GameMode) => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      dispatch(setMode(selectedMode));
+      setIsTransitioning(false);
+    }, 300);
+  }, [dispatch]);
+
+  /**
+   * 处理静音切换
+   */
+  const handleToggleMute = useCallback(() => {
     dispatch(toggleMusicMute());
-  };
+    
+    if (audioControllerRef.current) {
+      audioControllerRef.current.toggleMusicMute();
+      
+      // 如果取消静音，播放音乐
+      if (isMusicMuted) {
+        audioControllerRef.current.playMusic();
+      } else {
+        audioControllerRef.current.stopMusic();
+      }
+    }
+  }, [dispatch, isMusicMuted]);
 
-  // 处理倒计时归零事件
-  const handleCountdownZero = () => {
-    console.log('Countdown reached zero - triggering game end flow');
-    // 触发游戏结束流程
-    dispatch(setMode('ended'));
-  };
+  /**
+   * 处理游戏结束
+   */
+  const handleGameEnd = useCallback(() => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      dispatch(setMode('ended'));
+      setIsTransitioning(false);
+    }, 300);
+  }, [dispatch]);
+
+  /**
+   * 处理退出游戏
+   */
+  const handleExitGame = useCallback(() => {
+    setShowExitConfirm(true);
+  }, []);
+
+  /**
+   * 确认退出
+   */
+  const handleConfirmExit = useCallback(() => {
+    setShowExitConfirm(false);
+    setIsTransitioning(true);
+    
+    // 断开网络连接
+    if (networkSynchronizerRef.current) {
+      networkSynchronizerRef.current.leaveRoom();
+    }
+    
+    setTimeout(() => {
+      dispatch(setMode('menu'));
+      setIsTransitioning(false);
+    }, 300);
+  }, [dispatch]);
+
+  /**
+   * 取消退出
+   */
+  const handleCancelExit = useCallback(() => {
+    setShowExitConfirm(false);
+  }, []);
+
+  /**
+   * 处理"再玩一次"
+   */
+  const handlePlayAgain = useCallback(() => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      dispatch(setMode('menu'));
+      setIsTransitioning(false);
+    }, 300);
+  }, [dispatch]);
+
+  /**
+   * 处理从结束界面退出
+   */
+  const handleExitToMenu = useCallback(() => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setHasStarted(false);
+      dispatch(setMode('menu'));
+      setIsTransitioning(false);
+    }, 300);
+  }, [dispatch]);
 
   // 显示启动界面
   if (!hasStarted) {
     return (
-      <LaunchScreen 
-        onStart={handleStart} 
-        onAudioUnlock={handleAudioUnlock}
-      />
+      <div className={`app-container ${isTransitioning ? 'transitioning' : ''}`}>
+        <LaunchScreen 
+          onStart={handleStart} 
+          onAudioUnlock={handleAudioUnlock}
+        />
+      </div>
     );
   }
 
   // 显示模式选择界面
   if (mode === 'menu') {
     return (
-      <ModeSelection
-        onSelectMode={handleSelectMode}
-        onToggleMute={handleToggleMute}
-        isMuted={isMusicMuted}
-        isOnline={navigator.onLine}
-      />
+      <div className={`app-container ${isTransitioning ? 'transitioning' : ''}`}>
+        <ModeSelection
+          onSelectMode={handleSelectMode}
+          onToggleMute={handleToggleMute}
+          isMuted={isMusicMuted}
+          isOnline={navigator.onLine}
+        />
+      </div>
+    );
+  }
+
+  // 显示单人游戏界面
+  if (mode === 'single') {
+    return (
+      <div className={`app-container ${isTransitioning ? 'transitioning' : ''}`}>
+        <SinglePlayerGame
+          onExit={handleExitGame}
+          onGameEnd={handleGameEnd}
+        />
+        
+        {/* 退出确认对话框 */}
+        {showExitConfirm && (
+          <div className="exit-confirm-overlay" onClick={handleCancelExit}>
+            <div className="exit-confirm-dialog" onClick={(e) => e.stopPropagation()}>
+              <h3>确定要退出吗？</h3>
+              <p>当前游戏进度将会保存</p>
+              <div className="exit-confirm-buttons">
+                <button className="confirm-button" onClick={handleConfirmExit}>
+                  确定退出
+                </button>
+                <button className="cancel-button" onClick={handleCancelExit}>
+                  继续游戏
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 显示多人游戏界面
+  if (mode === 'multiplayer') {
+    if (!networkSynchronizerRef.current) {
+      return (
+        <div className="app-container">
+          <div className="error-screen">
+            <h2>网络服务未就绪</h2>
+            <p>请稍后再试</p>
+            <button onClick={() => dispatch(setMode('menu'))}>
+              返回菜单
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className={`app-container ${isTransitioning ? 'transitioning' : ''}`}>
+        <MultiplayerGame
+          networkSynchronizer={networkSynchronizerRef.current}
+          audioController={audioControllerRef.current}
+          onExit={handleExitGame}
+        />
+        
+        {/* 退出确认对话框 */}
+        {showExitConfirm && (
+          <div className="exit-confirm-overlay" onClick={handleCancelExit}>
+            <div className="exit-confirm-dialog" onClick={(e) => e.stopPropagation()}>
+              <h3>确定要退出房间吗？</h3>
+              <p>你将离开当前房间</p>
+              <div className="exit-confirm-buttons">
+                <button className="confirm-button" onClick={handleConfirmExit}>
+                  确定退出
+                </button>
+                <button className="cancel-button" onClick={handleCancelExit}>
+                  继续游戏
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     );
   }
 
   // 显示游戏结束界面
   if (mode === 'ended') {
-    return <GameEndScreen show={true} />;
+    return (
+      <div className={`app-container ${isTransitioning ? 'transitioning' : ''}`}>
+        <GameEndScreen
+          show={true}
+          onPlayAgain={handlePlayAgain}
+          onExit={handleExitToMenu}
+        />
+      </div>
+    );
   }
 
-  // 游戏界面占位符（将在后续任务中实现）
+  // 默认返回菜单
   return (
-    <div style={{ 
-      width: '100vw', 
-      height: '100vh', 
-      display: 'flex', 
-      flexDirection: 'column',
-      alignItems: 'center', 
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #1a0a0a 0%, #4a0e0e 50%, #8b0000 100%)',
-      color: '#ffd700',
-      fontSize: '24px',
-      textAlign: 'center',
-      padding: '20px',
-      gap: '40px'
-    }}>
-      <div>
-        <h1>游戏模式: {mode === 'single' ? '单人模式' : '多人模式'}</h1>
-        <p>游戏界面将在后续任务中实现</p>
-        <button 
-          onClick={() => dispatch(setMode('menu'))}
-          style={{
-            marginTop: '20px',
-            padding: '12px 24px',
-            fontSize: '18px',
-            background: '#dc143c',
-            color: '#fff',
-            border: '2px solid #ffd700',
-            borderRadius: '8px',
-            cursor: 'pointer'
-          }}
-        >
-          返回模式选择
+    <div className="app-container">
+      <div className="error-screen">
+        <h2>未知状态</h2>
+        <button onClick={() => dispatch(setMode('menu'))}>
+          返回菜单
         </button>
       </div>
-      
-      {/* 集成倒计时显示组件 */}
-      <CountdownDisplay 
-        engine={countdownEngine}
-        onCountdownZero={handleCountdownZero}
-      />
     </div>
   );
 }

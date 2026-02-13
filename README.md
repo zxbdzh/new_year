@@ -11,6 +11,9 @@
 - 🔥 **连击系统** - 快速连续点击触发增强效果
 - ✨ **特殊事件** - 整点烟花雨、新年祝福动画
 - ⚙️ **设置系统** - 音频、主题、性能、倒计时校准
+- 🔄 **流程管理** - 完整的游戏生命周期（启动→选择→游戏→结束）
+- 💾 **数据持久化** - 自动保存游戏进度和统计数据
+- 🎵 **音频控制** - 背景音乐、音效、静音切换
 
 ## 技术栈
 
@@ -32,6 +35,16 @@
 - **开发工具**: tsx 4.7.0
 
 ## 快速开始
+
+### 环境变量
+
+创建 `.env` 文件配置服务器地址（可选）：
+
+```env
+VITE_SERVER_URL=http://localhost:3001
+```
+
+如未配置，默认使用 `http://localhost:3001`。
 
 ### 前端开发
 
@@ -94,17 +107,62 @@ pnpm run lint          # 代码检查
 pnpm run format        # 代码格式化
 ```
 
-## 项目结构
+## 应用架构
+
+### 游戏流程
+
+应用实现了完整的游戏生命周期管理：
+
+```
+启动界面 (LaunchScreen)
+    ↓
+模式选择 (ModeSelection)
+    ↓
+┌─────────────┬─────────────┐
+│  单人模式    │  多人模式    │
+│ SinglePlayer │ Multiplayer │
+└─────────────┴─────────────┘
+    ↓
+游戏结束界面 (GameEndScreen)
+    ↓
+返回模式选择 / 退出
+```
+
+### 核心服务
+
+App.tsx 在应用级别初始化和管理以下核心服务：
+
+- **AudioController** - 音频管理和播放控制
+- **NetworkSynchronizer** - 多人模式实时通信
+- **StorageService** - 本地数据持久化
+
+这些服务通过 `useRef` 在组件生命周期内保持单例，并传递给子组件使用。
+
+### 状态管理
+
+- **全局状态** (Redux): 游戏模式、音频配置、统计数据
+- **本地状态** (useState): 过渡动画、确认对话框
+- **服务引用** (useRef): 音频、网络、存储服务实例
+
+### 项目结构
 
 ```
 src/
 ├── components/        # React组件
+│   ├── LaunchScreen.tsx       # 启动界面
+│   ├── ModeSelection.tsx      # 模式选择
+│   ├── SinglePlayerGame.tsx   # 单人游戏
+│   ├── MultiplayerGame.tsx    # 多人游戏
+│   ├── GameEndScreen.tsx      # 结束界面
+│   ├── CountdownDisplay.tsx   # 倒计时显示
+│   ├── SettingsScreen.tsx     # 设置界面
+│   └── ...
 ├── engines/           # 游戏引擎（烟花、倒计时）
 ├── services/          # 服务层（网络、音频、存储）
 ├── store/             # Redux状态管理
 ├── types/             # TypeScript类型定义
 ├── utils/             # 工具函数
-└── assets/            # 静态资源
+└── App.tsx            # 主应用组件（流程控制）
 ```
 
 ## 文档

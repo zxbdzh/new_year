@@ -316,6 +316,59 @@
    - ✅ 在游戏界面中显示倒计时
    - ✅ 处理倒计时归零事件（切换到结束界面）
 
+### ✅ 任务 1.6: 实现主应用组件 (App.tsx)
+
+**完成时间**: 2026-02-13
+
+**完成内容**:
+
+1. **完整游戏流程管理** (`src/App.tsx`)
+   - ✅ 启动界面 → 模式选择 → 游戏界面 → 结束界面
+   - ✅ 状态管理（hasStarted, showExitConfirm, isTransitioning）
+   - ✅ 过渡动画效果（300ms淡入淡出）
+   - ✅ 退出确认对话框（单人/多人模式）
+   - ✅ 页面卸载前保存提示（beforeunload事件）
+
+2. **核心服务初始化**:
+   - ✅ AudioController - 音频管理和播放控制
+   - ✅ NetworkSynchronizer - 多人模式实时通信
+   - ✅ StorageService - 本地数据持久化
+   - ✅ 使用useRef保持服务单例
+   - ✅ 环境变量支持（VITE_SERVER_URL）
+   - ✅ 完整的清理逻辑（useEffect cleanup）
+
+3. **游戏模式路由**:
+   - ✅ LaunchScreen - 启动界面（音频解锁）
+   - ✅ ModeSelection - 模式选择（单人/多人）
+   - ✅ SinglePlayerGame - 单人游戏界面
+   - ✅ MultiplayerGame - 多人游戏界面
+   - ✅ GameEndScreen - 游戏结束界面
+   - ✅ 错误状态处理（网络服务未就绪）
+
+4. **交互功能**:
+   - ✅ handleStart - 启动游戏
+   - ✅ handleAudioUnlock - 解锁音频上下文
+   - ✅ handleSelectMode - 选择游戏模式
+   - ✅ handleToggleMute - 切换静音
+   - ✅ handleGameEnd - 游戏结束
+   - ✅ handleExitGame - 退出游戏（带确认）
+   - ✅ handlePlayAgain - 再玩一次
+   - ✅ handleExitToMenu - 返回菜单
+   - ✅ 所有回调使用useCallback优化
+
+5. **实现特性**:
+   - Redux状态集成（mode, isMusicMuted）
+   - 服务实例传递给子组件
+   - 网络连接管理（leaveRoom on exit）
+   - 音频控制（playMusic, stopMusic, toggleMute）
+   - 过渡动画类名控制
+   - 完整的TypeScript类型支持
+
+6. **验证需求**:
+   - ✅ 需求 1.6: 完整游戏流程实现
+   - ✅ 需求 8.4: "再玩一次"功能
+   - ✅ 需求 8.5: "退出"功能（保存数据）
+
 ## 下一步任务
 
 参考 `.kiro/specs/new-year-fireworks-game/tasks.md` 中的任务列表：
