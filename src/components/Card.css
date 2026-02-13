@@ -1,0 +1,201 @@
+/**
+ * Card Component Styles
+ * 
+ * Implements all card variants with glassmorphism effects
+ * Supports hover effects with elevation and glow
+ */
+
+.card {
+  /* Base styles */
+  position: relative;
+  display: block;
+  border-radius: 16px;
+  
+  /* Typography */
+  font-family: var(--font-family-base);
+  color: var(--color-neutral-100);
+  
+  /* Transitions */
+  transition: all var(--duration-normal) var(--ease-in-out);
+  
+  /* Ensure proper stacking context */
+  isolation: isolate;
+}
+
+/* ========================================
+   Padding Variants
+   ======================================== */
+
+.card--padding-sm {
+  padding: var(--spacing-2); /* 16px */
+}
+
+.card--padding-md {
+  padding: var(--spacing-3); /* 24px */
+}
+
+.card--padding-lg {
+  padding: var(--spacing-4); /* 32px */
+}
+
+/* ========================================
+   Style Variants
+   ======================================== */
+
+/* Default Variant - Glassmorphism */
+.card--default {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow-md);
+}
+
+/* Elevated Variant - More prominent with stronger shadow */
+.card--elevated {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Outlined Variant - Emphasis on border */
+.card--outlined {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 2px solid var(--color-secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ========================================
+   Interactive States
+   ======================================== */
+
+/* Clickable cursor */
+.card--clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Hoverable cards */
+.card--hoverable:hover,
+.card--clickable:hover {
+  transform: translateY(-4px);
+}
+
+.card--default.card--hoverable:hover,
+.card--default.card--clickable:hover {
+  border-color: rgba(255, 215, 0, 0.3);
+  box-shadow: var(--shadow-xl), var(--glow-gold);
+}
+
+.card--elevated.card--hoverable:hover,
+.card--elevated.card--clickable:hover {
+  border-color: rgba(255, 215, 0, 0.4);
+  box-shadow: var(--shadow-2xl), var(--glow-gold);
+}
+
+.card--outlined.card--hoverable:hover,
+.card--outlined.card--clickable:hover {
+  border-color: var(--color-secondary-light);
+  box-shadow: var(--shadow-lg), var(--glow-gold);
+}
+
+/* Active state */
+.card--clickable:active {
+  transform: translateY(-2px);
+}
+
+/* Focus state for keyboard navigation */
+.card--clickable:focus-visible {
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   Responsive Adjustments
+   ======================================== */
+
+/* Mobile: Adjust padding and effects */
+@media (max-width: 767px) {
+  .card {
+    border-radius: 12px;
+  }
+  
+  .card--padding-sm {
+    padding: var(--spacing-2);
+  }
+  
+  .card--padding-md {
+    padding: var(--spacing-2);
+  }
+  
+  .card--padding-lg {
+    padding: var(--spacing-3);
+  }
+  
+  /* Reduce hover lift on mobile */
+  .card--hoverable:hover,
+  .card--clickable:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* Tablet: Standard padding */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .card--padding-lg {
+    padding: var(--spacing-3);
+  }
+}
+
+/* ========================================
+   Accessibility
+   ======================================== */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .card {
+    border-width: 2px;
+  }
+  
+  .card--outlined {
+    border-width: 3px;
+  }
+  
+  .card--clickable:focus-visible {
+    outline-width: 4px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+  
+  .card--hoverable:hover,
+  .card--clickable:hover,
+  .card--clickable:active {
+    transform: none;
+  }
+}
+
+/* ========================================
+   Fallback for browsers without backdrop-filter
+   ======================================== */
+
+@supports not (backdrop-filter: blur(10px)) {
+  .card--default {
+    background: rgba(0, 0, 0, 0.7);
+  }
+  
+  .card--elevated {
+    background: rgba(0, 0, 0, 0.8);
+  }
+  
+  .card--outlined {
+    background: rgba(0, 0, 0, 0.6);
+  }
+}

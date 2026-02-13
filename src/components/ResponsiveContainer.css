@@ -1,0 +1,80 @@
+/**
+ * 响应式容器样式
+ * Feature: ui-ux-redesign
+ */
+
+.responsive-container {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 居中对齐 */
+.responsive-container--centered {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 最大宽度配置 */
+.responsive-container--max-sm {
+  max-width: 640px;
+}
+
+.responsive-container--max-md {
+  max-width: 768px;
+}
+
+.responsive-container--max-lg {
+  max-width: 1024px;
+}
+
+.responsive-container--max-xl {
+  max-width: 1280px;
+}
+
+.responsive-container--max-full {
+  max-width: 100%;
+}
+
+/* 内边距配置 */
+.responsive-container--padding-none {
+  padding: 0;
+}
+
+.responsive-container--padding-sm {
+  padding: var(--spacing-2, 1rem);
+}
+
+.responsive-container--padding-md {
+  padding: var(--spacing-3, 1.5rem);
+}
+
+.responsive-container--padding-lg {
+  padding: var(--spacing-4, 2rem);
+}
+
+/* 移动端特定样式 */
+.responsive-container--mobile {
+  /* 移动端使用较小的内边距 */
+}
+
+.responsive-container--mobile.responsive-container--padding-sm {
+  padding: var(--spacing-1, 0.5rem);
+}
+
+.responsive-container--mobile.responsive-container--padding-md {
+  padding: var(--spacing-2, 1rem);
+}
+
+.responsive-container--mobile.responsive-container--padding-lg {
+  padding: var(--spacing-3, 1.5rem);
+}
+
+/* 平板特定样式 */
+.responsive-container--tablet {
+  /* 平板样式 */
+}
+
+/* 桌面特定样式 */
+.responsive-container--desktop {
+  /* 桌面样式 */
+}
