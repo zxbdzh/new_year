@@ -1,10 +1,11 @@
 /**
  * 启动界面组件
- * Feature: new-year-fireworks-game
- * 需求：1.1, 1.2, 1.4
+ * Feature: ui-ux-redesign
+ * 需求：3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7
  */
 
 import { useEffect, useState } from 'react';
+import { Button } from './Button';
 import './LaunchScreen.css';
 
 interface LaunchScreenProps {
@@ -56,14 +57,14 @@ export function LaunchScreen({ onStart, onAudioUnlock }: LaunchScreenProps) {
       {/* 新年主题背景 */}
       <div className="launch-background">
         {/* 红灯笼装饰 */}
-        <div className="lantern lantern-left"></div>
-        <div className="lantern lantern-right"></div>
+        <div className="lantern lantern-left" aria-hidden="true"></div>
+        <div className="lantern lantern-right" aria-hidden="true"></div>
         
         {/* 对联装饰 */}
-        <div className="couplet couplet-left">
+        <div className="couplet couplet-left" aria-hidden="true">
           <span>爆竹声中辞旧岁</span>
         </div>
-        <div className="couplet couplet-right">
+        <div className="couplet couplet-right" aria-hidden="true">
           <span>烟花绽放迎新春</span>
         </div>
       </div>
@@ -90,15 +91,20 @@ export function LaunchScreen({ onStart, onAudioUnlock }: LaunchScreenProps) {
         <h1 className="launch-title">新年烟花游戏</h1>
         <p className="launch-subtitle">点燃烟花，迎接新年</p>
         
-        {/* 点击开始按钮 */}
-        <button className="launch-button" onClick={handleStart}>
-          <span className="button-text">点击开始</span>
-          <span className="button-glow"></span>
-        </button>
+        {/* 点击开始按钮 - 使用新的Button组件 */}
+        <Button
+          variant="primary"
+          size="lg"
+          onClick={handleStart}
+          className="launch-button"
+          ariaLabel="开始游戏"
+        >
+          点击开始
+        </Button>
 
         {/* 网络状态指示器 */}
         <div className={`network-status ${isOnline ? 'online' : 'offline'}`}>
-          <span className="status-icon">
+          <span className="status-icon" aria-hidden="true">
             {isOnline ? (
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M8 0C3.58 0 0 3.58 0 8s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/>

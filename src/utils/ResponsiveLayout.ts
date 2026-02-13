@@ -1,9 +1,12 @@
 /**
  * 响应式布局工具
- * Feature: new-year-fireworks-game
+ * Feature: ui-ux-redesign
  * 
  * 负责处理屏幕尺寸变化和Canvas自动缩放
  */
+
+import { BREAKPOINTS, Breakpoint } from './constants';
+import { useState, useEffect } from 'react';
 
 /**
  * 屏幕尺寸信息
@@ -236,21 +239,40 @@ export class ResponsiveLayout {
    * 检查是否为移动设备
    */
   isMobile(): boolean {
-    return this.currentSize.width < 768;
+    return this.currentSize.width >= BREAKPOINTS.mobile.min && 
+           this.currentSize.width <= BREAKPOINTS.mobile.max;
   }
 
   /**
    * 检查是否为平板设备
    */
   isTablet(): boolean {
-    return this.currentSize.width >= 768 && this.currentSize.width < 1024;
+    return this.currentSize.width >= BREAKPOINTS.tablet.min && 
+           this.currentSize.width <= BREAKPOINTS.tablet.max;
   }
 
   /**
    * 检查是否为桌面设备
    */
   isDesktop(): boolean {
-    return this.currentSize.width >= 1024;
+    return this.currentSize.width >= BREAKPOINTS.desktop.min;
+  }
+
+  /**
+   * 获取当前断点
+   */
+  getCurrentBreakpoint(): Breakpoint {
+    const width = this.currentSize.width;
+    
+    if (width >= BREAKPOINTS.mobile.min && width <= BREAKPOINTS.mobile.max) {
+      return 'mobile';
+    }
+    
+    if (width >= BREAKPOINTS.tablet.min && width <= BREAKPOINTS.tablet.max) {
+      return 'tablet';
+    }
+    
+    return 'desktop';
   }
 
   /**
@@ -287,3 +309,125 @@ export class ResponsiveLayout {
  * 创建全局响应式布局实例
  */
 export const responsiveLayout = new ResponsiveLayout();
+
+/**
+ * 获取当前断点的工具函数
+ * 可在非React环境中使用
+ */
+export function getCurrentBreakpoint(): Breakpoint {
+  return responsiveLayout.getCurrentBreakpoint();
+}
+
+/**
+ * React Hook: 监听当前断点变化
+ * 
+ * @returns 当前断点 ('mobile' | 'tablet' | 'desktop')
+ * 
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const breakpoint = useBreakpoint();
+ *   
+ *   return (
+ *     <div>
+ *       {breakpoint === 'mobile' && <MobileLayout />}
+ *       {breakpoint === 'tablet' && <TabletLayout />}
+ *       {breakpoint === 'desktop' && <DesktopLayout />}
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+export function useBreakpoint(): Breakpoint {
+  const [breakpoint, setBreakpoint] = useState<Breakpoint>(() => 
+    responsiveLayout.getCurrentBreakpoint()
+  );
+
+  useEffect(() => {
+    // 初始化时设置当前断点
+    setBreakpoint(responsiveLayout.getCurrentBreakpoint());
+
+    // 监听屏幕尺寸变化
+    const unsubscribe = responsiveLayout.onResize(() => {
+      const newBreakpoint = responsiveLayout.getCurrentBreakpoint();
+      setBreakpoint(newBreakpoint);
+    });
+
+    // 清理监听器
+    return unsubscribe;
+  }, []);
+
+  return breakpoint;
+}
+
+/**
+ * React Hook: 监听视口尺寸变化
+ * 
+ * @returns 当前视口尺寸信息
+ * 
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const viewport = useViewportSize();
+ *   
+ *   return (
+ *     <div>
+ *       Width: {viewport.width}px, Height: {viewport.height}px
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+export function useViewportSize(): ScreenSize {
+  const [size, setSize] = useState<ScreenSize>(() => 
+    responsiveLayout.getScreenSize()
+  );
+
+  useEffect(() => {
+    // 初始化时设置当前尺寸
+    setSize(responsiveLayout.getScreenSize());
+
+    // 监听屏幕尺寸变化
+    const unsubscribe = responsiveLayout.onResize((newSize) => {
+      setSize(newSize);
+    });
+
+    // 清理监听器
+    return unsubscribe;
+  }, []);
+
+  return size;
+}
+
+/**
+ * 媒体查询辅助函数：检查是否匹配指定断点
+ * 
+ * @param breakpoint - 断点名称
+ * @returns 是否匹配该断点
+ */
+export function matchesBreakpoint(breakpoint: Breakpoint): boolean {
+  const width = window.innerWidth;
+  const bp = BREAKPOINTS[breakpoint];
+  return width >= bp.min && width <= bp.max;
+}
+
+/**
+ * 媒体查询辅助函数：检查是否为触摸设备
+ */
+export function isTouchDevice(): boolean {
+  return window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+}
+
+/**
+ * 媒体查询辅助函数：检查是否启用了减少动画
+ */
+export function prefersReducedMotion(): boolean {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/**
+ * 媒体查询辅助函数：检查是否启用了高对比度
+ */
+export function prefersHighContrast(): boolean {
+  return window.matchMedia('(prefers-contrast: high)').matches;
+}
