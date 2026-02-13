@@ -275,6 +275,63 @@ const handleSaveSettings = async (settings: SettingsData) => {
 - 保存后立即应用所有设置
 - 取消时恢复原始状态
 
+### SinglePlayerGame（单人游戏）
+**文件**: `SinglePlayerGame.tsx`, `SinglePlayerGame.css`
+
+**功能**:
+- 全屏烟花Canvas渲染
+- 倒计时显示集成
+- 连击系统和视觉反馈
+- 音频控制（静音切换）
+- 设置界面集成
+- 统计数据追踪
+- 游戏控制（重新开始、退出）
+
+**Props**:
+- `onExit: () => void` - 退出游戏回调
+- `onGameEnd?: () => void` - 游戏结束回调（可选）
+
+**需求**: 3.1, 3.6, 4.2
+
+**特性**:
+- 引擎就绪状态管理（`enginesReady`）- 确保所有引擎初始化完成后再渲染UI
+- 多引擎协调（倒计时、烟花、连击、音频、统计、性能）
+- 触摸和鼠标事件支持
+- 响应式Canvas尺寸调整
+- 游戏时间追踪和持久化
+- 连击状态实时显示
+
+**状态管理**:
+- Redux集成（音频配置、连击状态、统计数据）
+- 本地状态（连击显示、设置界面、引擎就绪）
+- 引擎实例引用（useRef管理生命周期）
+
+**引擎初始化流程**:
+1. 创建存储服务和性能优化器
+2. 初始化音频控制器（异步）
+3. 加载统计追踪器数据
+4. 创建倒计时引擎（自动计算农历新年）
+5. 创建烟花引擎并启动动画循环
+6. 创建连击系统并注册回调
+7. 播放背景音乐（如果未静音）
+8. 设置`enginesReady = true`触发UI渲染
+
+**使用示例**:
+```tsx
+import { SinglePlayerGame } from './components/SinglePlayerGame';
+
+<SinglePlayerGame
+  onExit={() => dispatch(setMode('selection'))}
+  onGameEnd={() => dispatch(setMode('ended'))}
+/>
+```
+
+**清理机制**:
+- 保存游戏时间和统计数据
+- 停止所有引擎和服务
+- 清理事件监听器和回调
+- 释放Canvas资源
+
 ## 下一步
 
-任务24.2已完成设置界面的集成。接下来将实现移动端优化（任务25）。
+任务24已完成UI/UX完善和设置界面集成。接下来将进行完整流程集成测试（任务25）。

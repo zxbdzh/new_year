@@ -61,6 +61,9 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
   
   // 设置按钮状态
   const [showSettings, setShowSettings] = useState(false);
+  
+  // 引擎就绪状态
+  const [enginesReady, setEnginesReady] = useState(false);
 
   // 初始化所有引擎和服务
   useEffect(() => {
@@ -130,6 +133,9 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
         if (!audioConfig.musicMuted) {
           audioController.playMusic();
         }
+        
+        // 标记引擎已就绪
+        setEnginesReady(true);
         
       } catch (error) {
         console.error('Failed to initialize game:', error);
@@ -364,7 +370,7 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
       <div className="top-control-bar">
         {/* 倒计时显示 */}
         <div className="countdown-wrapper">
-          {countdownEngineRef.current && (
+          {enginesReady && countdownEngineRef.current && (
             <CountdownDisplay
               engine={countdownEngineRef.current}
               onCountdownZero={handleCountdownZero}
