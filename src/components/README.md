@@ -157,6 +157,18 @@ const countdownEngine = useMemo(() => {
 />
 ```
 
+**音频控制器增强**:
+
+AudioController现在包含音频播放状态追踪和并发音效限制：
+- `isMusicPlaying` - 追踪背景音乐播放状态
+- `activeSoundEffects` - 追踪当前活动音效数量
+- `maxConcurrentSounds` - 限制最大并发音效数（默认8个）
+
+这些改进有助于：
+- 防止音频资源过度使用
+- 优化移动设备性能
+- 避免音效重叠导致的音频失真
+
 **状态管理**:
 - 使用`useState`管理倒计时时间、校准对话框状态
 - 使用`useCallback`优化回调函数

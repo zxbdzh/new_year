@@ -69,6 +69,8 @@
   align-items: center;
   justify-content: center;
   color: #fff;
+  z-index: 100;
+  position: relative;
 }
 
 .control-button:hover {

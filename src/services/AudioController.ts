@@ -21,6 +21,9 @@ export class AudioController {
   private storageService: StorageService;
   private musicOscillators: OscillatorNode[] = [];
   private isInitialized: boolean = false;
+  private isMusicPlaying: boolean = false;
+  private activeSoundEffects: number = 0;
+  private maxConcurrentSounds: number = 8;
 
   /**
    * 构造函数
@@ -115,8 +118,16 @@ export class AudioController {
       return;
     }
 
+    // 如果音乐已经在播放，不要重复播放
+    if (this.isMusicPlaying) {
+      return;
+    }
+
     // 停止当前音乐
     this.stopMusic();
+    
+    // 标记音乐正在播放
+    this.isMusicPlaying = true;
 
     try {
       const now = this.audioContext.currentTime;
@@ -158,7 +169,8 @@ export class AudioController {
       // 循环播放
       const totalDuration = melody.reduce((sum, note) => sum + note.duration, 0);
       setTimeout(() => {
-        if (this.musicOscillators.length > 0) {
+        if (this.isMusicPlaying && this.musicOscillators.length > 0) {
+          this.isMusicPlaying = false; // 重置标志以允许下一次播放
           this.playMusic();
         }
       }, totalDuration * 1000);
@@ -172,6 +184,7 @@ export class AudioController {
    * 停止背景音乐
    */
   stopMusic(): void {
+    this.isMusicPlaying = false;
     this.musicOscillators.forEach(osc => {
       try {
         osc.stop();
@@ -192,8 +205,18 @@ export class AudioController {
       return;
     }
 
+    // 限制并发音效数量
+    if (this.activeSoundEffects >= this.maxConcurrentSounds) {
+      return;
+    }
+
     try {
+      this.activeSoundEffects++;
+      
       const now = this.audioContext.currentTime;
+      
+      // 根据活跃音效数量动态调整音量
+      const volumeReduction = Math.max(0.1, 1 - (this.activeSoundEffects / this.maxConcurrentSounds) * 0.7);
       
       // 创建上升的音调模拟"嗖"声
       const osc = this.audioContext.createOscillator();
@@ -203,7 +226,7 @@ export class AudioController {
       osc.frequency.setValueAtTime(200, now);
       osc.frequency.exponentialRampToValueAtTime(800, now + 0.3);
       
-      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.setValueAtTime(0.3 * volumeReduction, now);
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
       
       osc.connect(gain);
@@ -211,8 +234,14 @@ export class AudioController {
       
       osc.start(now);
       osc.stop(now + 0.3);
+      
+      // 音效结束后减少计数
+      osc.onended = () => {
+        this.activeSoundEffects = Math.max(0, this.activeSoundEffects - 1);
+      };
     } catch (error) {
       console.error('Failed to play launch SFX:', error);
+      this.activeSoundEffects = Math.max(0, this.activeSoundEffects - 1);
     }
   }
 
@@ -225,8 +254,18 @@ export class AudioController {
       return;
     }
 
+    // 限制并发音效数量
+    if (this.activeSoundEffects >= this.maxConcurrentSounds) {
+      return;
+    }
+
     try {
+      this.activeSoundEffects++;
+      
       const now = this.audioContext.currentTime;
+      
+      // 根据活跃音效数量动态调整音量
+      const volumeReduction = Math.max(0.1, 1 - (this.activeSoundEffects / this.maxConcurrentSounds) * 0.7);
       
       // 使用白噪声和低频振荡器模拟爆炸声
       const bufferSize = this.audioContext.sampleRate * 0.5;
@@ -247,7 +286,7 @@ export class AudioController {
       noiseFilter.frequency.exponentialRampToValueAtTime(100, now + 0.5);
       
       const noiseGain = this.audioContext.createGain();
-      noiseGain.gain.setValueAtTime(0.5, now);
+      noiseGain.gain.setValueAtTime(0.5 * volumeReduction, now);
       noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
       
       noise.connect(noiseFilter);
@@ -265,7 +304,7 @@ export class AudioController {
       bass.frequency.setValueAtTime(80, now);
       bass.frequency.exponentialRampToValueAtTime(40, now + 0.3);
       
-      bassGain.gain.setValueAtTime(0.6, now);
+      bassGain.gain.setValueAtTime(0.6 * volumeReduction, now);
       bassGain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
       
       bass.connect(bassGain);
@@ -273,8 +312,14 @@ export class AudioController {
       
       bass.start(now);
       bass.stop(now + 0.3);
+      
+      // 音效结束后减少计数（使用较长的时间）
+      bass.onended = () => {
+        this.activeSoundEffects = Math.max(0, this.activeSoundEffects - 1);
+      };
     } catch (error) {
       console.error('Failed to play explosion SFX:', error);
+      this.activeSoundEffects = Math.max(0, this.activeSoundEffects - 1);
     }
   }
 
@@ -404,6 +449,11 @@ export class AudioController {
   toggleMusicMute(): void {
     this.config.musicMuted = !this.config.musicMuted;
 
+    // 如果静音，停止音乐；如果取消静音，开始播放
+    if (this.config.musicMuted) {
+      this.stopMusic();
+    }
+
     // 应用到增益节点
     if (this.musicGainNode) {
       this.musicGainNode.gain.value = this.config.musicMuted ? 0 : this.config.musicVolume;
@@ -475,6 +525,7 @@ export class AudioController {
    */
   destroy(): void {
     this.stopMusic();
+    this.activeSoundEffects = 0;
 
     if (this.audioContext) {
       this.audioContext.close();

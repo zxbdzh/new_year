@@ -247,19 +247,20 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
 
   // 切换静音
   const handleToggleMute = useCallback(() => {
-    dispatch(toggleMusicMute());
-    
     if (audioControllerRef.current) {
       audioControllerRef.current.toggleMusicMute();
       
+      // 获取更新后的配置
+      const updatedConfig = audioControllerRef.current.getConfig();
+      
       // 如果取消静音，播放音乐
-      if (audioConfig.musicMuted) {
+      if (!updatedConfig.musicMuted) {
         audioControllerRef.current.playMusic();
-      } else {
-        audioControllerRef.current.stopMusic();
       }
     }
-  }, [dispatch, audioConfig.musicMuted]);
+    
+    dispatch(toggleMusicMute());
+  }, [dispatch]);
 
   // 打开设置
   const handleOpenSettings = useCallback(() => {
@@ -324,6 +325,8 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
     // 清除烟花
     if (fireworksEngineRef.current) {
       fireworksEngineRef.current.clear();
+      // 重新启动动画循环
+      fireworksEngineRef.current.startAnimation();
     }
     
     // 重置连击
@@ -341,6 +344,16 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
     
     // 重置游戏开始时间
     gameStartTimeRef.current = Date.now();
+    
+    // 重新启动倒计时引擎
+    if (countdownEngineRef.current) {
+      countdownEngineRef.current.stop();
+      countdownEngineRef.current = new CountdownEngine({
+        targetDate: CountdownEngine.getNextLunarNewYear(),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        manualOffset: 0,
+      });
+    }
   }, [dispatch]);
 
   // 退出游戏
