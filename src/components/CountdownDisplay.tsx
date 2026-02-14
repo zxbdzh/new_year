@@ -24,8 +24,6 @@ interface CountdownDisplayProps {
  */
 export function CountdownDisplay({ engine, onCountdownZero, skinId = 'lantern' }: CountdownDisplayProps) {
   const [time, setTime] = useState<CountdownTime>(engine.getCurrentTime());
-  const [showCalibration, setShowCalibration] = useState(false);
-  const [offsetInput, setOffsetInput] = useState('0');
   const [isLessThanOneHour, setIsLessThanOneHour] = useState(false);
 
   // 根据皮肤ID应用样式类
@@ -58,26 +56,6 @@ export function CountdownDisplay({ engine, onCountdownZero, skinId = 'lantern' }
       engine.stop();
     };
   }, [engine, handleTimeUpdate]);
-
-  // 打开校准对话框
-  const handleOpenCalibration = () => {
-    setShowCalibration(true);
-  };
-
-  // 关闭校准对话框
-  const handleCloseCalibration = () => {
-    setShowCalibration(false);
-    setOffsetInput('0');
-  };
-
-  // 应用时间校准
-  const handleApplyCalibration = () => {
-    const offset = parseInt(offsetInput, 10);
-    if (!isNaN(offset)) {
-      engine.setManualOffset(offset);
-    }
-    handleCloseCalibration();
-  };
 
   // 格式化数字为两位数
   const formatNumber = (num: number): string => {
@@ -121,51 +99,6 @@ export function CountdownDisplay({ engine, onCountdownZero, skinId = 'lantern' }
           <div className="time-label">秒</div>
         </div>
       </div>
-
-      {/* 校准按钮 */}
-      <button 
-        className="calibration-button" 
-        onClick={handleOpenCalibration}
-        aria-label="时间校准"
-      >
-        ⚙️ 校准
-      </button>
-
-      {/* 校准对话框 */}
-      {showCalibration && (
-        <div className="calibration-dialog-overlay" onClick={handleCloseCalibration}>
-          <div className="calibration-dialog" onClick={(e) => e.stopPropagation()}>
-            <h3 className="dialog-title">时间校准</h3>
-            <p className="dialog-description">
-              输入偏移秒数（正数提前，负数延后）
-            </p>
-            
-            <input
-              type="number"
-              className="calibration-input"
-              value={offsetInput}
-              onChange={(e) => setOffsetInput(e.target.value)}
-              placeholder="0"
-              autoFocus
-            />
-            
-            <div className="dialog-actions">
-              <button 
-                className="dialog-button dialog-button-cancel" 
-                onClick={handleCloseCalibration}
-              >
-                取消
-              </button>
-              <button 
-                className="dialog-button dialog-button-confirm" 
-                onClick={handleApplyCalibration}
-              >
-                应用
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

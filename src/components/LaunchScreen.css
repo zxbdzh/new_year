@@ -202,43 +202,6 @@
              pulse 2s var(--ease-in-out) 1s infinite;
 }
 
-/* 网络状态指示器 */
-.network-status {
-  margin-top: var(--spacing-4);
-  padding: var(--spacing-1) var(--spacing-3);
-  border-radius: 20px;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  transition: all var(--duration-normal) var(--ease-in-out);
-  opacity: 0;
-  animation: fadeIn var(--duration-normal) var(--ease-out) 0.8s forwards;
-}
-
-.network-status.online {
-  background: rgba(34, 197, 94, 0.2);
-  border: 2px solid rgba(34, 197, 94, 0.5);
-  color: #86efac;
-}
-
-.network-status.offline {
-  background: rgba(239, 68, 68, 0.2);
-  border: 2px solid rgba(239, 68, 68, 0.5);
-  color: #fca5a5;
-}
-
-.status-icon {
-  display: inline-flex;
-  align-items: center;
-  font-size: var(--font-size-lg);
-}
-
-.status-text {
-  font-weight: var(--font-weight-medium);
-}
-
 /* 响应式设计 - Mobile (320px - 767px) */
 @media (max-width: 767px) {
   /* 优化灯笼尺寸和位置 */
@@ -289,12 +252,6 @@
   /* 减少飘雪数量（通过CSS隐藏部分） */
   .snowflake:nth-child(n+26) {
     display: none;
-  }
-  
-  /* 优化网络状态指示器 */
-  .network-status {
-    font-size: var(--font-size-xs);
-    padding: var(--spacing-1) var(--spacing-2);
   }
 }
 

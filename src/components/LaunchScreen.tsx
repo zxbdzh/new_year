@@ -17,7 +17,8 @@ interface LaunchScreenProps {
 
 /**
  * 启动界面组件
- * 显示新年主题背景、飘雪动画、网络状态检测
+ * 显示新年主题背景、飘雪动画
+ * 内部维护网络状态检测（不显示UI）
  */
 export function LaunchScreen({ onStart, onAudioUnlock }: LaunchScreenProps) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -101,25 +102,6 @@ export function LaunchScreen({ onStart, onAudioUnlock }: LaunchScreenProps) {
         >
           点击开始
         </Button>
-
-        {/* 网络状态指示器 */}
-        <div className={`network-status ${isOnline ? 'online' : 'offline'}`}>
-          <span className="status-icon" aria-hidden="true">
-            {isOnline ? (
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M8 0C3.58 0 0 3.58 0 8s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/>
-                <circle cx="8" cy="8" r="3"/>
-              </svg>
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M0 8l2-2 2 2-2 2-2-2zm6-4l2-2 2 2-2 2-2-2zm4 8l2-2 2 2-2 2-2-2z"/>
-              </svg>
-            )}
-          </span>
-          <span className="status-text">
-            {isOnline ? '多人模式可用' : '网络离线 - 仅单人模式'}
-          </span>
-        </div>
       </div>
     </div>
   );
