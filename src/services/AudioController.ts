@@ -110,7 +110,7 @@ export class AudioController {
   /**
    * 播放背景音乐（循环）
    * 使用多个振荡器合成简单的旋律
-   * 需求：6.2
+   * 需求：6.2, 4.1, 4.2
    */
   playMusic(): void {
     if (!this.audioContext || !this.musicGainNode) {
@@ -118,15 +118,17 @@ export class AudioController {
       return;
     }
 
-    // 如果音乐已经在播放，不要重复播放
+    // 关键修复：在方法开始时检查isMusicPlaying标志
+    // 如果为true，立即返回并记录日志
     if (this.isMusicPlaying) {
+      console.log('Music is already playing, skipping playMusic() call');
       return;
     }
 
-    // 停止当前音乐
+    // 停止当前音乐（清理旧的振荡器）
     this.stopMusic();
     
-    // 标记音乐正在播放
+    // 在创建振荡器前设置isMusicPlaying = true
     this.isMusicPlaying = true;
 
     try {
@@ -182,9 +184,13 @@ export class AudioController {
 
   /**
    * 停止背景音乐
+   * 需求：4.3
    */
   stopMusic(): void {
+    // 关键修复：在方法开始时设置isMusicPlaying = false
     this.isMusicPlaying = false;
+    
+    // 清理所有振荡器并断开连接
     this.musicOscillators.forEach(osc => {
       try {
         osc.stop();
@@ -193,6 +199,8 @@ export class AudioController {
         // 忽略已停止的错误
       }
     });
+    
+    // 清空musicOscillators数组
     this.musicOscillators = [];
   }
 
@@ -479,6 +487,7 @@ export class AudioController {
 
   /**
    * 设置音乐静音状态
+   * 需求：4.4
    * 
    * @param muted - 是否静音
    */
@@ -493,6 +502,11 @@ export class AudioController {
     } else {
       if (this.musicGainNode) {
         this.musicGainNode.gain.value = this.config.musicVolume;
+      }
+      // 关键修复：在取消静音分支中检查isMusicPlaying
+      // 只有当isMusicPlaying为false时才调用playMusic()
+      if (!this.isMusicPlaying) {
+        this.playMusic();
       }
     }
   }
@@ -560,16 +574,24 @@ export class AudioController {
 
   /**
    * 销毁音频控制器
+   * 需求：4.5
    */
   destroy(): void {
+    // 调用stopMusic()清理音乐
     this.stopMusic();
+    
+    // 重置活跃音效计数
     this.activeSoundEffects = 0;
 
+    // 关闭audioContext
     if (this.audioContext) {
       this.audioContext.close();
       this.audioContext = null;
     }
 
+    // 重置所有标志和引用
+    this.musicGainNode = null;
+    this.sfxGainNode = null;
     this.isInitialized = false;
   }
 }
