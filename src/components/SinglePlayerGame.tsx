@@ -251,7 +251,10 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
 
   // 切换静音
   const handleToggleMute = useCallback(() => {
+    dispatch(toggleMusicMute());
+    
     if (audioControllerRef.current) {
+      // 切换静音状态
       audioControllerRef.current.toggleMusicMute();
       
       // 获取更新后的配置
@@ -262,8 +265,6 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
         audioControllerRef.current.playMusic();
       }
     }
-    
-    dispatch(toggleMusicMute());
   }, [dispatch]);
 
   // 打开设置
@@ -465,6 +466,7 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
         isOpen={showSettings}
         onClose={handleCloseSettings}
         onSave={handleSaveSettings}
+        audioController={audioControllerRef.current}
       />
     </div>
   );

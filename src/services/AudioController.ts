@@ -449,14 +449,19 @@ export class AudioController {
   toggleMusicMute(): void {
     this.config.musicMuted = !this.config.musicMuted;
 
-    // 如果静音，停止音乐；如果取消静音，开始播放
+    // 如果静音，停止音乐
     if (this.config.musicMuted) {
       this.stopMusic();
-    }
-
-    // 应用到增益节点
-    if (this.musicGainNode) {
-      this.musicGainNode.gain.value = this.config.musicMuted ? 0 : this.config.musicVolume;
+      // 应用静音到增益节点
+      if (this.musicGainNode) {
+        this.musicGainNode.gain.value = 0;
+      }
+    } else {
+      // 取消静音，恢复音量
+      if (this.musicGainNode) {
+        this.musicGainNode.gain.value = this.config.musicVolume;
+      }
+      // 注意：不在这里播放音乐，由调用者决定是否播放
     }
   }
 
@@ -469,6 +474,39 @@ export class AudioController {
     // 应用到增益节点
     if (this.sfxGainNode) {
       this.sfxGainNode.gain.value = this.config.sfxMuted ? 0 : this.config.sfxVolume;
+    }
+  }
+
+  /**
+   * 设置音乐静音状态
+   * 
+   * @param muted - 是否静音
+   */
+  setMusicMuted(muted: boolean): void {
+    this.config.musicMuted = muted;
+
+    if (muted) {
+      this.stopMusic();
+      if (this.musicGainNode) {
+        this.musicGainNode.gain.value = 0;
+      }
+    } else {
+      if (this.musicGainNode) {
+        this.musicGainNode.gain.value = this.config.musicVolume;
+      }
+    }
+  }
+
+  /**
+   * 设置音效静音状态
+   * 
+   * @param muted - 是否静音
+   */
+  setSFXMuted(muted: boolean): void {
+    this.config.sfxMuted = muted;
+
+    if (this.sfxGainNode) {
+      this.sfxGainNode.gain.value = muted ? 0 : this.config.sfxVolume;
     }
   }
 

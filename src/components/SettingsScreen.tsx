@@ -16,6 +16,7 @@ import {
   setSFXMuted,
 } from '../store/audioSlice';
 import { setTheme, setSkin } from '../store/themeSlice';
+import type { AudioController } from '../services/AudioController';
 import './SettingsScreen.css';
 
 interface SettingsScreenProps {
@@ -25,6 +26,8 @@ interface SettingsScreenProps {
   onClose: () => void;
   /** 保存回调 */
   onSave: (settings: SettingsData) => void;
+  /** 音频控制器引用 */
+  audioController?: AudioController | null;
 }
 
 export interface SettingsData {
@@ -45,6 +48,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   isOpen,
   onClose,
   onSave,
+  audioController,
 }) => {
   const dispatch = useDispatch();
   
@@ -96,6 +100,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     const newMuted = !localMusicMuted;
     setLocalMusicMuted(newMuted);
     dispatch(setMusicMuted(newMuted));
+    
+    // 同步到 AudioController
+    if (audioController) {
+      audioController.setMusicMuted(newMuted);
+      
+      // 如果取消静音，播放音乐
+      if (!newMuted) {
+        audioController.playMusic();
+      }
+    }
   };
 
   // 处理音效静音切换
@@ -103,6 +117,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     const newMuted = !localSFXMuted;
     setLocalSFXMuted(newMuted);
     dispatch(setSFXMuted(newMuted));
+    
+    // 同步到 AudioController
+    if (audioController) {
+      audioController.setSFXMuted(newMuted);
+    }
   };
 
   // 处理主题选择
