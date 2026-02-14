@@ -333,6 +333,136 @@ import { SinglePlayerGame } from './components/SinglePlayerGame';
 - 清理事件监听器和回调
 - 释放Canvas资源
 
+## 触摸事件处理
+
+### TouchHandler（触摸处理器）
+**文件**: `../utils/TouchHandler.ts`
+
+**功能**:
+- 触摸防抖（避免过度触发，默认100ms间隔）
+- 多点触摸支持（同时处理多个触摸点）
+- 触摸反馈效果（涟漪动画）
+- 触摸点追踪和管理
+
+**接口**:
+```typescript
+interface TouchPoint {
+  x: number;              // 相对容器的X坐标
+  y: number;              // 相对容器的Y坐标
+  identifier: number;     // 触摸点唯一标识符
+  timestamp: number;      // 触摸时间戳
+}
+
+interface TouchHandlerConfig {
+  minInterval?: number;         // 最小触摸间隔（毫秒）
+  enableMultiTouch?: boolean;   // 是否启用多点触摸
+  showFeedback?: boolean;       // 是否显示触摸反馈
+  feedbackDuration?: number;    // 触摸反馈持续时间（毫秒）
+}
+```
+
+**需求**: 10.3
+
+**特性**:
+- 自动计算相对容器的坐标
+- 防抖机制避免过度触发
+- 可配置的多点触摸支持
+- 视觉反馈（涟漪效果）
+- 活动触摸点追踪
+
+**使用示例**:
+```typescript
+import { TouchHandler, injectTouchFeedbackStyles } from '@/utils/TouchHandler';
+
+// 在应用启动时注入CSS样式（只需调用一次）
+injectTouchFeedbackStyles();
+
+// 创建触摸处理器
+const canvasElement = document.getElementById('game-canvas');
+const touchHandler = new TouchHandler(canvasElement, {
+  minInterval: 100,        // 100ms防抖
+  enableMultiTouch: true,  // 启用多点触摸
+  showFeedback: true,      // 显示触摸反馈
+  feedbackDuration: 800,   // 反馈持续800ms
+});
+
+// 处理触摸开始
+canvasElement.addEventListener('touchstart', (e) => {
+  touchHandler.handleTouchStart(e, (point) => {
+    // 在触摸位置生成烟花
+    fireworksEngine.launchFirework(point.x, point.y);
+  });
+});
+
+// 处理触摸移动（可选）
+canvasElement.addEventListener('touchmove', (e) => {
+  touchHandler.handleTouchMove(e, (point) => {
+    // 处理拖动
+  });
+});
+
+// 处理触摸结束
+canvasElement.addEventListener('touchend', (e) => {
+  touchHandler.handleTouchEnd(e);
+});
+
+// 获取活动触摸点
+const activeTouches = touchHandler.getActiveTouches();
+const touchCount = touchHandler.getActiveTouchCount();
+
+// 清理
+touchHandler.destroy();
+```
+
+**方法**:
+- `handleTouchStart(event, callback)` - 处理触摸开始事件
+- `handleTouchMove(event, callback?)` - 处理触摸移动事件
+- `handleTouchEnd(event)` - 处理触摸结束事件
+- `getActiveTouchCount()` - 获取当前活动触摸点数量
+- `getActiveTouches()` - 获取所有活动触摸点
+- `clear()` - 清除所有触摸状态
+- `updateConfig(config)` - 更新配置
+- `destroy()` - 销毁处理器
+
+**React集成**:
+```typescript
+// 在React组件中使用
+const SinglePlayerGame = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const touchHandlerRef = useRef<TouchHandler | null>(null);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    // 创建触摸处理器
+    touchHandlerRef.current = new TouchHandler(canvasRef.current, {
+      minInterval: 100,
+      enableMultiTouch: true,
+      showFeedback: true,
+    });
+
+    return () => {
+      touchHandlerRef.current?.destroy();
+    };
+  }, []);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchHandlerRef.current?.handleTouchStart(e, (point) => {
+      fireworksEngine?.launchFirework(point.x, point.y);
+    });
+  };
+
+  return (
+    <canvas
+      ref={canvasRef}
+      onTouchStart={handleTouchStart}
+      onTouchMove={(e) => touchHandlerRef.current?.handleTouchMove(e)}
+      onTouchEnd={(e) => touchHandlerRef.current?.handleTouchEnd(e)}
+    />
+  );
+};
+```
+
 ## 下一步
 
-任务24已完成UI/UX完善和设置界面集成。接下来将进行完整流程集成测试（任务25）。
+任务26.1已完成触摸事件处理实现。接下来将进行移动端性能优化（任务26.2）和移动端测试（任务26.3）。
