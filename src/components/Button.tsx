@@ -66,7 +66,7 @@ export const Button: React.FC<ButtonProps> = ({
         </span>
       )}
       {icon && !loading && <span className="btn__icon">{icon}</span>}
-      <span className="btn__text">{children}</span>
+      {!loading && <span className="btn__text">{children}</span>}
     </button>
   );
 };

@@ -654,7 +654,8 @@
 }
 
 .offset-input {
-  width: 100%;
+  width: 120px;
+  max-width: 100%;
   background: rgba(255, 255, 255, 0.05);
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--spacing-1);

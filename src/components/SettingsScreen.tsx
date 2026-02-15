@@ -8,6 +8,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { Volume2, VolumeX, X } from 'lucide-react';
 import type { RootState } from '../store';
 import {
   setMusicVolume,
@@ -220,7 +221,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         <div className="settings-header">
           <h2>游戏设置</h2>
           <button className="close-button" onClick={onClose} aria-label="关闭">
-            ×
+            <X size={24} />
           </button>
         </div>
 
@@ -251,7 +252,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   onClick={handleMusicMuteToggle}
                   aria-label={localMusicMuted ? '取消静音' : '静音'}
                 >
-                  {localMusicMuted ? '🔇' : '🔊'}
+                  {localMusicMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
                 </button>
               </div>
             </div>
@@ -278,7 +279,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   onClick={handleSFXMuteToggle}
                   aria-label={localSFXMuted ? '取消静音' : '静音'}
                 >
-                  {localSFXMuted ? '🔇' : '🔊'}
+                  {localSFXMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
                 </button>
               </div>
             </div>

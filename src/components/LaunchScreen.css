@@ -201,8 +201,32 @@
   animation: scaleIn var(--duration-normal) var(--ease-bounce) 0.6s forwards,
              pulse 2s var(--ease-in-out) 1s infinite;
   position: relative;
-  z-index: 100;
-  pointer-events: auto;
+  z-index: 100 !important;
+  pointer-events: auto !important;
+  isolation: isolate;
+}
+
+/* 确保按钮始终可见，移除hover时的隐藏 */
+.launch-button,
+.launch-button:hover,
+.launch-button:active,
+.launch-button:focus {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* 确保按钮内容始终可见 */
+.launch-button *,
+.launch-button:hover *,
+.launch-button:active *,
+.launch-button:focus * {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.launch-button:hover {
+  transform: scale(1.05) !important;
+  z-index: 101 !important;
 }
 
 /* 响应式设计 - Mobile (320px - 767px) */

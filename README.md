@@ -14,6 +14,7 @@
 - 🔄 **流程管理** - 完整的游戏生命周期（启动→选择→游戏→结束）
 - 💾 **数据持久化** - 自动保存游戏进度和统计数据
 - 🎵 **音频控制** - 背景音乐、音效、静音切换
+- 🏆 **成就系统** - 防重复触发机制，重新开始时自动重置
 
 ## 技术栈
 
@@ -197,6 +198,8 @@ src/
 - 🎨 [设计文档](.kiro/specs/new-year-fireworks-game/design.md)
 - ✅ [任务列表](.kiro/specs/new-year-fireworks-game/tasks.md)
 - 📊 [项目状态](PROJECT_STATUS.md)
+- 🧩 [组件文档](docs/COMPONENTS.md)
+- 🏆 [成就系统](docs/ACHIEVEMENT_SYSTEM.md)
 
 ## 性能要求
 

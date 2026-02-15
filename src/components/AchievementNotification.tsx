@@ -6,6 +6,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { Trophy, X, Gift } from 'lucide-react';
 import type { Achievement } from '../types/AchievementTypes';
 import './AchievementNotification.css';
 
@@ -57,7 +58,8 @@ export const AchievementNotification: React.FC<AchievementNotificationProps> = (
     <div className={`achievement-notification ${isVisible ? 'visible' : ''}`}>
       <div className="notification-content">
         <div className="notification-header">
-          <span className="notification-title">🎉 成就解锁!</span>
+          <Trophy size={20} style={{ marginRight: '8px' }} />
+          <span className="notification-title">成就解锁!</span>
         </div>
         
         <div className="notification-body">
@@ -73,7 +75,8 @@ export const AchievementNotification: React.FC<AchievementNotificationProps> = (
             <p className="achievement-desc">{achievement.description}</p>
             {achievement.reward && (
               <div className="achievement-reward-badge">
-                🎁 {achievement.reward}
+                <Gift size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                {achievement.reward}
               </div>
             )}
           </div>
@@ -88,7 +91,7 @@ export const AchievementNotification: React.FC<AchievementNotificationProps> = (
         }}
         aria-label="关闭"
       >
-        ×
+        <X size={20} />
       </button>
     </div>
   );

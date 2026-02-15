@@ -118,9 +118,6 @@ export class FireworksEngine {
    * 注册默认烟花类型
    */
   private registerDefaultFireworkTypes(): void {
-    // 祝福语列表
-    const blessings = ['新年快乐', '恭喜发财', '万事如意', '福星高照', '财源广进'];
-    
     // 牡丹型 - 球形爆炸
     this.registerFireworkType({
       id: 'peony',
@@ -129,7 +126,7 @@ export class FireworksEngine {
       colors: ['#ff0000', '#ff6600', '#ffcc00', '#ff3366'],
       pattern: 'peony',
       duration: 2500,
-      specialEffect: Math.random() < 0.1 ? blessings[Math.floor(Math.random() * blessings.length)] : undefined
+      specialEffect: undefined // 祝福语在发射时动态决定
     });
 
     // 流星型 - 拖尾效果
@@ -140,7 +137,7 @@ export class FireworksEngine {
       colors: ['#00ffff', '#0099ff', '#ffffff'],
       pattern: 'meteor',
       duration: 3000,
-      specialEffect: Math.random() < 0.1 ? blessings[Math.floor(Math.random() * blessings.length)] : undefined
+      specialEffect: undefined
     });
 
     // 心形
@@ -151,7 +148,7 @@ export class FireworksEngine {
       colors: ['#ff1493', '#ff69b4', '#ffb6c1'],
       pattern: 'heart',
       duration: 2800,
-      specialEffect: Math.random() < 0.1 ? blessings[Math.floor(Math.random() * blessings.length)] : undefined
+      specialEffect: undefined
     });
 
     // 福字型
@@ -162,7 +159,7 @@ export class FireworksEngine {
       colors: ['#ff0000', '#ffd700', '#ff4500'],
       pattern: 'fortune',
       duration: 3000,
-      specialEffect: Math.random() < 0.1 ? blessings[Math.floor(Math.random() * blessings.length)] : undefined
+      specialEffect: undefined
     });
 
     // 红包型
@@ -173,7 +170,7 @@ export class FireworksEngine {
       colors: ['#ff0000', '#ffd700', '#ff6347'],
       pattern: 'redEnvelope',
       duration: 2500,
-      specialEffect: Math.random() < 0.1 ? blessings[Math.floor(Math.random() * blessings.length)] : undefined
+      specialEffect: undefined
     });
   }
 
@@ -329,13 +326,20 @@ export class FireworksEngine {
       type = types[Math.floor(Math.random() * types.length)];
     }
 
+    // 动态添加祝福语（10%概率）
+    const blessings = ['新年快乐', '恭喜发财', '万事如意', '福星高照', '财源广进'];
+    const typeWithBlessing = {
+      ...type,
+      specialEffect: Math.random() < 0.1 ? blessings[Math.floor(Math.random() * blessings.length)] : undefined
+    };
+
     // 创建烟花实例
     const id = `firework_${Date.now()}_${Math.random()}`;
-    const particles = this.createParticles(x, y, type);
+    const particles = this.createParticles(x, y, typeWithBlessing);
 
     const firework: FireworkInstance = {
       id,
-      type,
+      type: typeWithBlessing,
       x,
       y,
       startTime: Date.now(),

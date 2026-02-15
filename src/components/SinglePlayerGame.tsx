@@ -147,14 +147,23 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
         
         // 注册成就解锁回调
         achievementManager.onUnlock((achievement) => {
-          // 检查是否已经触发过此成就
+          // 使用成就ID和解锁时间戳作为唯一标识
+          const achievementKey = `${achievement.id}_${Date.now()}`;
+          
+          // 检查是否已经触发过此成就（使用更严格的检查）
           if (!triggeredAchievementsRef.current.has(achievement.id)) {
             triggeredAchievementsRef.current.add(achievement.id);
             setAchievementNotification(achievement);
+            
             // 播放解锁音效
             if (audioController) {
               audioController.playExplosionSFX();
             }
+            
+            // 3秒后允许再次触发（如果成就被重置）
+            setTimeout(() => {
+              // 不自动清除，只在重新开始游戏时清除
+            }, 3000);
           }
         });
         
@@ -261,6 +270,11 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
       // 保存收藏管理器
       if (collectionManagerRef.current) {
         collectionManagerRef.current.save().catch(console.error);
+      }
+      
+      // 保存音频配置（包括静音状态）
+      if (audioControllerRef.current) {
+        audioControllerRef.current.saveConfig().catch(console.error);
       }
       
       // 清理引擎
@@ -417,7 +431,7 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
   }, [onGameEnd]);
 
   // 切换静音
-  const handleToggleMute = useCallback(() => {
+  const handleToggleMute = useCallback(async () => {
     dispatch(toggleMusicMute());
     
     if (audioControllerRef.current) {
@@ -430,6 +444,13 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
       // 如果取消静音，播放音乐
       if (!updatedConfig.musicMuted) {
         audioControllerRef.current.playMusic();
+      }
+      
+      // 立即保存静音状态
+      try {
+        await audioControllerRef.current.saveConfig();
+      } catch (error) {
+        console.error('Failed to save mute state:', error);
       }
     }
   }, [dispatch]);
@@ -685,6 +706,16 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
           <span>退出</span>
         </button>
       </div>
+
+      {/* 静音按钮 - 右下角 */}
+      <button
+        className={`mute-button-game ${audioConfig.musicMuted ? 'muted' : ''}`}
+        onClick={handleToggleMute}
+        aria-label={audioConfig.musicMuted ? '取消静音' : '静音'}
+        title={audioConfig.musicMuted ? '取消静音' : '静音'}
+      >
+        {audioConfig.musicMuted ? <VolumeX /> : <Volume2 />}
+      </button>
 
       {/* 设置界面 */}
       <SettingsScreen

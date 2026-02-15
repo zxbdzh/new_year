@@ -235,13 +235,22 @@ export class AchievementManager {
    */
   unlockAchievement(id: string): void {
     const achievement = this.achievements.get(id);
-    if (!achievement || achievement.unlocked) {
+    if (!achievement) {
+      console.warn(`Achievement ${id} not found`);
+      return;
+    }
+    
+    // 严格检查是否已解锁
+    if (achievement.unlocked) {
+      console.log(`Achievement ${id} already unlocked, skipping`);
       return;
     }
 
     achievement.unlocked = true;
     achievement.unlockedAt = Date.now();
     achievement.progress = achievement.target;
+
+    console.log(`[AchievementManager] Unlocked achievement: ${achievement.name}`);
 
     // 触发回调
     this.triggerUnlockCallbacks(achievement);

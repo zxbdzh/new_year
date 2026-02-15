@@ -55,8 +55,8 @@ const initialState: ThemeSliceState = {
       id: 'temple-fair',
       name: '庙会场景',
       backgroundImage: '',
-      primaryColor: '#C62828',
-      secondaryColor: '#FFA000',
+      primaryColor: '#FFA000', // 金色作为主色
+      secondaryColor: '#FFD700', // 亮金色作为次要色
       accentColor: '#FF8A65',
     },
     {

@@ -31,34 +31,34 @@ export class ThemeManager {
     let bgGradient: string;
     
     switch (theme.id) {
-      case 'theme1':
-        // 主题1: 明亮红色渐变 (传统新年红)
-        bgGradient = `linear-gradient(135deg, 
-          #8B0000 0%, 
+      case 'new-year-dinner':
+        // 年夜饭场景: 温暖的橙红色调
+        bgGradient = `radial-gradient(ellipse at top, 
+          #FF4500 0%, 
           #DC143C 25%, 
-          #FF0000 50%, 
-          #DC143C 75%, 
-          #8B0000 100%)`;
+          #8B0000 50%,
+          #4a0000 75%,
+          #2d0000 100%)`;
         break;
       
-      case 'theme2':
-        // 主题2: 深红黑渐变 (神秘夜空)
-        bgGradient = `linear-gradient(135deg, 
-          #0a0a0a 0%, 
-          #1a0505 25%, 
-          #2d0a0a 50%, 
-          #1a0505 75%, 
-          #0a0a0a 100%)`;
+      case 'temple-fair':
+        // 庙会场景: 金黄色调
+        bgGradient = `radial-gradient(ellipse at center, 
+          #FFD700 0%, 
+          #FFA500 20%, 
+          #FF8C00 40%,
+          #8B4513 70%,
+          #3d2817 100%)`;
         break;
       
-      case 'theme3':
-        // 主题3: 深蓝紫渐变 (神秘星空) - 与其他主题明显区别
-        bgGradient = `linear-gradient(135deg, 
-          #1a0033 0%, 
-          #2d1b69 25%, 
-          #1e3a8a 50%, 
-          #2d1b69 75%, 
-          #1a0033 100%)`;
+      case 'snow-village':
+        // 雪乡场景: 蓝白冷色调
+        bgGradient = `radial-gradient(ellipse at bottom, 
+          #87CEEB 0%, 
+          #4682B4 25%, 
+          #1e3a8a 50%,
+          #0F2027 75%,
+          #000814 100%)`;
         break;
       
       default:
