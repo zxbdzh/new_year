@@ -43,7 +43,7 @@ export const PlayerNotification: React.FC<PlayerNotificationProps> = ({
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [duration, onDismiss]);
+  }, [duration, timestamp]); // 使用 timestamp 而不是 onDismiss
 
   if (!visible) {
     return null;
