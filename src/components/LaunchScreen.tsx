@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { Sparkles } from 'lucide-react';
 import { Button } from './Button';
 import './LaunchScreen.css';
 
@@ -82,7 +83,7 @@ export function LaunchScreen({ onStart, onAudioUnlock }: LaunchScreenProps) {
               animationDuration: `${flake.animationDuration}s`,
             }}
           >
-            ❄
+            <Sparkles size={16} />
           </div>
         ))}
       </div>
