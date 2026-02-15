@@ -363,8 +363,9 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
 
   // 重新开始游戏
   const handleRestart = useCallback(() => {
-    // 清除烟花
+    // 清除烟花并停止动画
     if (fireworksEngineRef.current) {
+      fireworksEngineRef.current.stopAnimation();
       fireworksEngineRef.current.clear();
       // 重新启动动画循环
       fireworksEngineRef.current.startAnimation();
@@ -475,9 +476,27 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
 
       {/* 连击显示 */}
       {comboState.isActive && (
-        <div className="combo-display">
+        <div className={`combo-display ${comboState.count >= 5 ? 'combo-milestone' : ''} ${comboState.count >= 10 ? 'combo-milestone-10' : ''} ${comboState.count >= 20 ? 'combo-milestone-20' : ''} ${comboState.count >= 50 ? 'combo-milestone-50' : ''} ${comboState.count >= 100 ? 'combo-milestone-100' : ''} ${comboState.count >= 200 ? 'combo-milestone-200' : ''}`}>
           <div className="combo-count">{comboState.count}x</div>
-          <div className="combo-label">连击!</div>
+          <div className="combo-label">
+            {comboState.count >= 200 ? '传说连击!' : 
+             comboState.count >= 100 ? '史诗连击!' : 
+             comboState.count >= 50 ? '超级连击!' : 
+             comboState.count >= 20 ? '疯狂连击!' : 
+             comboState.count >= 10 ? '极限连击!' : 
+             comboState.count >= 5 ? '完美连击!' : 
+             '连击!'}
+          </div>
+          {comboState.count >= 5 && (
+            <div className="combo-particles" aria-hidden="true">
+              {Array.from({ length: Math.min(comboState.count, 20) }).map((_, i) => (
+                <div key={i} className="combo-particle" style={{
+                  '--delay': `${i * 0.05}s`,
+                  '--angle': `${(360 / Math.min(comboState.count, 20)) * i}deg`
+                } as React.CSSProperties} />
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -432,6 +432,16 @@ export class FireworksEngine {
   }
 
   /**
+   * 停止动画循环
+   */
+  stopAnimation(): void {
+    if (this.animationId !== null) {
+      cancelAnimationFrame(this.animationId);
+      this.animationId = null;
+    }
+  }
+
+  /**
    * 动画循环
    */
   private animate(): void {
