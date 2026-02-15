@@ -147,9 +147,6 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
         
         // 注册成就解锁回调
         achievementManager.onUnlock((achievement) => {
-          // 使用成就ID和解锁时间戳作为唯一标识
-          const achievementKey = `${achievement.id}_${Date.now()}`;
-          
           // 检查是否已经触发过此成就（使用更严格的检查）
           if (!triggeredAchievementsRef.current.has(achievement.id)) {
             triggeredAchievementsRef.current.add(achievement.id);
@@ -159,11 +156,6 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
             if (audioController) {
               audioController.playExplosionSFX();
             }
-            
-            // 3秒后允许再次触发（如果成就被重置）
-            setTimeout(() => {
-              // 不自动清除，只在重新开始游戏时清除
-            }, 3000);
           }
         });
         
@@ -598,17 +590,6 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
 
       {/* 顶部控制栏 */}
       <div className="top-control-bar">
-        {/* 倒计时显示 */}
-        <div className="countdown-wrapper">
-          {enginesReady && countdownEngineRef.current && (
-            <CountdownDisplay
-              engine={countdownEngineRef.current}
-              onCountdownZero={handleCountdownZero}
-              skinId={currentSkin.id}
-            />
-          )}
-        </div>
-
         {/* 控制按钮 */}
         <div className="control-buttons">
           <button
@@ -655,6 +636,17 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
           >
             <Settings size={20} />
           </button>
+        </div>
+        
+        {/* 倒计时显示 - 移到控制按钮下方 */}
+        <div className="countdown-wrapper">
+          {enginesReady && countdownEngineRef.current && (
+            <CountdownDisplay
+              engine={countdownEngineRef.current}
+              onCountdownZero={handleCountdownZero}
+              skinId={currentSkin.id}
+            />
+          )}
         </div>
       </div>
 

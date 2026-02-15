@@ -29,8 +29,8 @@
   left: 0;
   right: 0;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
   padding: 1rem;
   z-index: 10;
   pointer-events: none;
@@ -41,40 +41,44 @@
   pointer-events: auto;
 }
 
-/* 倒计时包装器 - 居中 */
+/* 倒计时包装器 - 居中，在控制按钮下方 */
 .countdown-wrapper {
   flex: 0 0 auto;
   display: flex;
   justify-content: center;
-  order: 1;
+  order: 2;
 }
 
-/* 控制按钮组 - 右侧 */
+/* 控制按钮组 - 顶部右侧 */
 .control-buttons {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
+  top: 0;
+  right: 0;
   display: flex;
   gap: 0.5rem;
   align-items: flex-start;
   z-index: 100;
+  order: 1;
 }
 
-/* 确保图标可见 - 增强对比度和尺寸 */
+/* 确保图标可见 - lucide-react图标样式 */
 .control-button svg {
   width: 20px !important;
   height: 20px !important;
   color: #FFFFFF !important;
-  stroke: currentColor !important;
-  fill: none !important;
   filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.9)) 
           drop-shadow(0 0 12px rgba(124, 58, 237, 0.6));
   z-index: 1;
   position: relative;
-  stroke-width: 2 !important;
   display: block !important;
   opacity: 1 !important;
   visibility: visible !important;
+}
+
+.control-button:hover svg {
+  color: #E2E8F0 !important;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 1)) 
+          drop-shadow(0 0 20px rgba(124, 58, 237, 0.8));
 }
 
 /* 控制按钮 - 现代化玻璃态设计 + Neon Glow */

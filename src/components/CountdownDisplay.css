@@ -264,15 +264,26 @@
   /* 使用统一的现代化紫色设计 */
 }
 
+.countdown-display--lantern .time-value {
+  color: #FFD700 !important;
+  text-shadow: 
+    0 0 20px rgba(255, 215, 0, 1),
+    0 0 40px rgba(255, 215, 0, 0.8),
+    0 0 60px rgba(255, 215, 0, 0.6),
+    0 4px 8px rgba(0, 0, 0, 0.8),
+    0 2px 0 rgba(255, 215, 0, 0.8),
+    0 4px 0 rgba(200, 165, 0, 0.6) !important;
+}
+
 .countdown-display--lantern .time-separator {
-  color: #FFD700;
+  color: #FFD700 !important;
   text-shadow: 
     0 0 15px rgba(255, 215, 0, 0.9),
     0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .countdown-display--lantern .time-label {
-  color: #FFA500;
+  color: #FFA500 !important;
   font-weight: 600;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   font-size: 0.9rem;
@@ -297,20 +308,35 @@
 
 .countdown-display--couplet .countdown-title {
   font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
-  /* 使用统一的现代化设计 */
+  color: #DC143C !important;
+  text-shadow: 
+    0 0 15px rgba(220, 20, 60, 0.8),
+    0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 .countdown-display--couplet .time-value {
   font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif !important;
-  /* 使用统一的现代化紫色设计，不覆盖颜色 */
+  color: #FF0000 !important;
+  text-shadow: 
+    0 0 20px rgba(255, 0, 0, 1),
+    0 0 40px rgba(255, 0, 0, 0.8),
+    0 0 60px rgba(255, 0, 0, 0.6),
+    0 4px 8px rgba(0, 0, 0, 0.8),
+    0 2px 0 rgba(220, 0, 0, 0.8),
+    0 4px 0 rgba(180, 0, 0, 0.6) !important;
 }
 
 .countdown-display--couplet .time-separator {
-  /* 使用统一的现代化设计 */
+  color: #DC143C !important;
+  text-shadow: 
+    0 0 15px rgba(220, 20, 60, 0.9),
+    0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .countdown-display--couplet .time-label {
-  /* 使用统一的现代化设计 */
+  color: #FF6347 !important;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 /* ========================================
@@ -348,7 +374,18 @@
 
 .countdown-display--zodiac .time-value {
   font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif !important;
-  /* 使用统一的现代化紫色设计 */
+  background: linear-gradient(135deg, 
+    #9370DB 0%, 
+    #FFD700 50%, 
+    #9370DB 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: float 3s ease-in-out infinite, gradientShift 3s ease-in-out infinite !important;
+  filter: drop-shadow(0 0 20px rgba(147, 112, 219, 0.8))
+          drop-shadow(0 0 40px rgba(255, 215, 0, 0.6))
+          drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8)) !important;
 }
 
 @keyframes gradientShift {
@@ -361,14 +398,14 @@
 }
 
 .countdown-display--zodiac .time-separator {
-  color: #FFD700;
+  color: #FFD700 !important;
   text-shadow: 
     0 0 15px rgba(255, 215, 0, 0.9),
     0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .countdown-display--zodiac .time-label {
-  color: #DDA0DD;
+  color: #DDA0DD !important;
   font-weight: 600;
   text-shadow: 
     0 0 10px rgba(221, 160, 221, 0.6),
