@@ -78,11 +78,13 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
    * 初始化烟花引擎
    */
   useEffect(() => {
-    if (!canvasRef.current || isInitialized || initializingRef.current) return;
+    if (!canvasRef.current || initializingRef.current) return;
     
     initializingRef.current = true;
 
     try {
+      console.log('[MultiplayerGame] 开始初始化引擎...');
+      
       // 创建存储服务
       const storageService = new StorageService();
       storageServiceRef.current = storageService;
@@ -99,6 +101,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
       });
       countdownEngineRef.current = countdownEngine;
       setCountdownReady(true);
+      console.log('[MultiplayerGame] 倒计时引擎初始化成功');
 
       // 创建烟花引擎
       const engine = new FireworksEngine(canvasRef.current, audioController);
@@ -112,6 +115,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
       console.log('[MultiplayerGame] 烟花引擎初始化成功');
     } catch (error) {
       console.error('[MultiplayerGame] 烟花引擎初始化失败:', error);
+      initializingRef.current = false;
     }
 
     return () => {
@@ -124,7 +128,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
         countdownEngineRef.current = null;
       }
     };
-  }, [audioController, isInitialized]);
+  }, [audioController]); // 移除 isInitialized 依赖
 
   /**
    * 处理本地点击 - 发射烟花并同步到其他玩家
