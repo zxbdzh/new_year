@@ -10,7 +10,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { setMode } from './store/gameSlice';
-import { toggleMusicMute } from './store/audioSlice';
+import { toggleMusicMute, updateAudioConfig } from './store/audioSlice';
 import { setTheme, setSkin } from './store/themeSlice';
 import { LaunchScreen } from './components/LaunchScreen';
 import { ModeSelection } from './components/ModeSelection';
@@ -21,6 +21,7 @@ import { NetworkSynchronizer } from './services/NetworkSynchronizer';
 import { AudioController } from './services/AudioController';
 import { StorageService } from './services/StorageService';
 import { ThemeManager } from './services/ThemeManager';
+import { getDefaultSettings, mergeWithDefaults } from './utils/defaultSettings';
 import type { GameMode } from './types/GameTypes';
 import './App.css';
 
@@ -64,41 +65,49 @@ function App() {
         // 加载保存的设置并恢复主题和皮肤
         try {
           const savedData = await storageService.load();
-          if (savedData) {
-            // 恢复主题
-            if (savedData.themeId) {
-              const theme = availableThemes.find(t => t.id === savedData.themeId);
-              if (theme) {
-                dispatch(setTheme(savedData.themeId));
-                themeManager.applyTheme(theme);
-                console.log('[App] 已恢复主题:', savedData.themeId);
-              } else {
-                console.warn(`[App] 主题 ${savedData.themeId} 不存在，使用默认主题`);
-                themeManager.applyTheme(currentTheme);
-              }
+          // 合并保存的数据和默认值，确保所有字段都存在
+          const settings = mergeWithDefaults(savedData);
+          
+          // 恢复主题
+          if (settings.themeId) {
+            const theme = availableThemes.find(t => t.id === settings.themeId);
+            if (theme) {
+              dispatch(setTheme(settings.themeId));
+              themeManager.applyTheme(theme);
+              console.log('[App] 已恢复主题:', settings.themeId);
             } else {
-              // 应用默认主题
+              console.warn(`[App] 主题 ${settings.themeId} 不存在，使用默认主题`);
               themeManager.applyTheme(currentTheme);
             }
-
-            // 恢复皮肤
-            if (savedData.skinId) {
-              const skin = availableSkins.find(s => s.id === savedData.skinId);
-              if (skin) {
-                dispatch(setSkin(savedData.skinId));
-                console.log('[App] 已恢复皮肤:', savedData.skinId);
-              } else {
-                console.warn(`[App] 皮肤 ${savedData.skinId} 不存在，使用默认皮肤`);
-              }
-            }
           } else {
-            // 首次加载，应用默认主题
+            // 应用默认主题
             themeManager.applyTheme(currentTheme);
-            console.log('[App] 首次加载，使用默认主题');
           }
+
+          // 恢复皮肤
+          if (settings.skinId) {
+            const skin = availableSkins.find(s => s.id === settings.skinId);
+            if (skin) {
+              dispatch(setSkin(settings.skinId));
+              console.log('[App] 已恢复皮肤:', settings.skinId);
+            } else {
+              console.warn(`[App] 皮肤 ${settings.skinId} 不存在，使用默认皮肤`);
+            }
+          }
+
+          // 恢复音频配置
+          if (settings.audioConfig) {
+            dispatch(updateAudioConfig(settings.audioConfig));
+            console.log('[App] 已恢复音频配置');
+          }
+          
+          console.log('[App] 设置加载完成，手动偏移:', settings.manualOffset);
         } catch (error) {
-          console.error('[App] 加载设置失败，使用默认主题:', error);
+          console.error('[App] 加载设置失败，使用默认设置:', error);
+          // 使用默认设置
+          const defaults = getDefaultSettings();
           themeManager.applyTheme(currentTheme);
+          dispatch(updateAudioConfig(defaults.audioConfig));
         }
 
         // 创建音频控制器
@@ -133,6 +142,17 @@ function App() {
       }
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /**
+   * 应用主题变化
+   * 当用户在设置中更改主题时，立即应用到所有屏幕
+   */
+  useEffect(() => {
+    if (themeManagerRef.current && currentTheme) {
+      themeManagerRef.current.applyTheme(currentTheme);
+      console.log('[App] 主题已更新:', currentTheme.id);
+    }
+  }, [currentTheme]);
 
   /**
    * 处理页面卸载前保存
