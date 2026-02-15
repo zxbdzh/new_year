@@ -164,7 +164,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
             timestamp: Date.now(),
             isCombo: true,
             comboCount: state.count,
-            message: `达成${state.count}连击！`,
+            message: `[你] 达成${state.count}连击！`,
           };
           setNotifications([notification]);
         }
@@ -353,7 +353,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
         timestamp: data.timestamp,
         isCombo: true,
         comboCount: data.comboCount,
-        message: `达成${data.comboCount}连击！`,
+        message: `[${data.playerNickname}] 达成${data.comboCount}连击！`,
       };
       setNotifications([notification]);
     });
@@ -572,7 +572,13 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
 
       {/* 连击显示 */}
       {comboState.isActive && (
-        <div className={`combo-display ${comboState.count >= 10 ? 'combo-milestone' : ''} ${comboState.count >= 50 ? 'combo-milestone-50' : ''} ${comboState.count >= 100 ? 'combo-milestone-100' : ''}`}>
+        <div className={[
+          'combo-display',
+          comboState.count >= 10 && 'combo-milestone',
+          comboState.count >= 50 && 'combo-milestone-50',
+          comboState.count >= 100 && 'combo-milestone-100',
+          comboState.count >= 200 && 'combo-milestone-200'
+        ].filter(Boolean).join(' ')}>
           <div className="combo-count">{comboState.count}x</div>
           <div className="combo-label">
             {comboState.count >= 200 ? '传说连击!' : 
@@ -591,6 +597,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
             key={notification.id}
             playerNickname={notification.playerNickname}
             timestamp={notification.timestamp}
+            duration={notification.isCombo ? 2000 : 1000}
             message={notification.message}
             isCombo={notification.isCombo}
             comboCount={notification.comboCount}

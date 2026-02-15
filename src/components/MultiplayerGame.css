@@ -348,9 +348,9 @@
 /* 连击显示 */
 .combo-display {
   position: fixed;
-  top: 50%;
+  bottom: 120px;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   z-index: 50;
   text-align: center;
   pointer-events: none;
@@ -358,88 +358,120 @@
 }
 
 .combo-count {
-  font-size: 8rem;
+  font-size: 4rem;
   font-weight: 900;
   color: #ffd700;
   text-shadow: 
-    0 0 40px rgba(255, 215, 0, 1),
-    0 0 80px rgba(255, 215, 0, 0.8),
-    0 0 120px rgba(255, 215, 0, 0.6),
-    0 6px 20px rgba(0, 0, 0, 0.8);
+    0 0 30px rgba(255, 215, 0, 1),
+    0 0 60px rgba(255, 215, 0, 0.7),
+    0 4px 16px rgba(0, 0, 0, 0.8);
   line-height: 1;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   letter-spacing: 0.1em;
 }
 
 .combo-label {
-  font-size: 2.5rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: #fff;
   text-shadow: 
-    0 0 20px rgba(255, 255, 255, 0.8),
-    0 4px 12px rgba(0, 0, 0, 0.8);
-  letter-spacing: 0.2em;
+    0 0 15px rgba(255, 255, 255, 0.7),
+    0 3px 10px rgba(0, 0, 0, 0.8);
+  letter-spacing: 0.15em;
 }
 
 /* 连击里程碑特效 - 10连击 */
 .combo-milestone .combo-count {
+  font-size: 5rem;
   animation: comboMilestone 0.6s ease-out;
+}
+
+.combo-milestone .combo-label {
+  font-size: 1.8rem;
 }
 
 /* 连击里程碑特效 - 50连击 */
 .combo-milestone-50 .combo-count {
-  font-size: 10rem;
+  font-size: 6rem;
   color: #ff6b6b;
   text-shadow: 
-    0 0 60px rgba(255, 107, 107, 1),
-    0 0 120px rgba(255, 107, 107, 0.9),
-    0 0 180px rgba(255, 107, 107, 0.7),
-    0 8px 24px rgba(0, 0, 0, 0.9);
+    0 0 50px rgba(255, 107, 107, 1),
+    0 0 100px rgba(255, 107, 107, 0.9),
+    0 0 150px rgba(255, 107, 107, 0.7),
+    0 6px 20px rgba(0, 0, 0, 0.9);
   animation: comboSuper 1s ease-out;
 }
 
 .combo-milestone-50 .combo-label {
-  font-size: 3rem;
+  font-size: 2.2rem;
   color: #ff6b6b;
   text-shadow: 
-    0 0 30px rgba(255, 107, 107, 1),
-    0 4px 16px rgba(0, 0, 0, 0.9);
+    0 0 25px rgba(255, 107, 107, 1),
+    0 4px 14px rgba(0, 0, 0, 0.9);
 }
 
 /* 连击里程碑特效 - 100连击 */
 .combo-milestone-100 .combo-count {
-  font-size: 12rem;
+  font-size: 7rem;
   color: #a78bfa;
   background: linear-gradient(45deg, #a78bfa, #ec4899, #f59e0b);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-shadow: none;
-  filter: drop-shadow(0 0 80px rgba(167, 139, 250, 1))
-          drop-shadow(0 0 160px rgba(167, 139, 250, 0.9))
-          drop-shadow(0 10px 30px rgba(0, 0, 0, 0.9));
+  filter: drop-shadow(0 0 60px rgba(167, 139, 250, 1))
+          drop-shadow(0 0 120px rgba(167, 139, 250, 0.9))
+          drop-shadow(0 8px 24px rgba(0, 0, 0, 0.9));
   animation: comboEpic 1.2s ease-out;
 }
 
 .combo-milestone-100 .combo-label {
-  font-size: 3.5rem;
+  font-size: 2.5rem;
   background: linear-gradient(45deg, #a78bfa, #ec4899, #f59e0b);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-shadow: none;
-  filter: drop-shadow(0 0 40px rgba(167, 139, 250, 1))
-          drop-shadow(0 6px 20px rgba(0, 0, 0, 0.9));
+  filter: drop-shadow(0 0 30px rgba(167, 139, 250, 1))
+          drop-shadow(0 5px 16px rgba(0, 0, 0, 0.9));
+}
+
+/* 连击里程碑特效 - 200连击 */
+.combo-milestone-200 .combo-count {
+  font-size: 8rem;
+  background: linear-gradient(45deg, #ffd700, #ff6b6b, #a78bfa, #ec4899, #f59e0b, #ffd700);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  filter: drop-shadow(0 0 80px rgba(255, 215, 0, 1))
+          drop-shadow(0 0 160px rgba(255, 107, 107, 1))
+          drop-shadow(0 10px 30px rgba(0, 0, 0, 1));
+  animation: comboLegendary 1.5s ease-out, rainbowShift 3s ease-in-out infinite;
+}
+
+.combo-milestone-200 .combo-label {
+  font-size: 3rem;
+  background: linear-gradient(45deg, #ffd700, #ff6b6b, #a78bfa, #ec4899, #f59e0b, #ffd700);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  filter: drop-shadow(0 0 40px rgba(255, 215, 0, 1))
+          drop-shadow(0 6px 20px rgba(0, 0, 0, 1));
+  animation: rainbowShift 3s ease-in-out infinite;
 }
 
 @keyframes comboFadeIn {
   from {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.3);
+    transform: translateX(-50%) scale(0.3);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: translateX(-50%) scale(1);
   }
 }
 
@@ -498,61 +530,136 @@
   100% {
     transform: scale(1) rotate(0deg);
     opacity: 1;
-    filter: drop-shadow(0 0 80px rgba(167, 139, 250, 1))
-            drop-shadow(0 0 160px rgba(167, 139, 250, 0.9))
-            drop-shadow(0 10px 30px rgba(0, 0, 0, 0.9));
+    filter: drop-shadow(0 0 60px rgba(167, 139, 250, 1))
+            drop-shadow(0 0 120px rgba(167, 139, 250, 0.9))
+            drop-shadow(0 8px 24px rgba(0, 0, 0, 0.9));
+  }
+}
+
+@keyframes comboLegendary {
+  0% {
+    transform: scale(0.2) rotate(-30deg);
+    opacity: 0;
+  }
+  15% {
+    transform: scale(2) rotate(15deg);
+  }
+  30% {
+    transform: scale(1.4) rotate(-8deg);
+  }
+  45% {
+    transform: scale(1.7) rotate(5deg);
+  }
+  60% {
+    transform: scale(1.2) rotate(-3deg);
+  }
+  80% {
+    transform: scale(1.3) rotate(2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes rainbowShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
   }
 }
 
 /* 响应式 */
 @media (max-width: 768px) {
+  .combo-display {
+    bottom: 100px;
+  }
+  
   .combo-count {
-    font-size: 5rem;
+    font-size: 3rem;
   }
   
   .combo-label {
-    font-size: 1.8rem;
+    font-size: 1.2rem;
+  }
+  
+  .combo-milestone .combo-count {
+    font-size: 3.5rem;
+  }
+  
+  .combo-milestone .combo-label {
+    font-size: 1.4rem;
   }
   
   .combo-milestone-50 .combo-count {
-    font-size: 6rem;
+    font-size: 4rem;
   }
   
   .combo-milestone-50 .combo-label {
-    font-size: 2rem;
+    font-size: 1.6rem;
   }
   
   .combo-milestone-100 .combo-count {
-    font-size: 7rem;
+    font-size: 4.5rem;
   }
   
   .combo-milestone-100 .combo-label {
-    font-size: 2.5rem;
+    font-size: 1.8rem;
+  }
+  
+  .combo-milestone-200 .combo-count {
+    font-size: 5rem;
+  }
+  
+  .combo-milestone-200 .combo-label {
+    font-size: 2rem;
   }
 }
 
 @media (max-width: 480px) {
+  .combo-display {
+    bottom: 80px;
+  }
+  
   .combo-count {
-    font-size: 3.5rem;
+    font-size: 2.5rem;
   }
   
   .combo-label {
-    font-size: 1.3rem;
+    font-size: 1rem;
+  }
+  
+  .combo-milestone .combo-count {
+    font-size: 3rem;
+  }
+  
+  .combo-milestone .combo-label {
+    font-size: 1.2rem;
   }
   
   .combo-milestone-50 .combo-count {
-    font-size: 4.5rem;
+    font-size: 3.5rem;
   }
   
   .combo-milestone-50 .combo-label {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
   }
   
   .combo-milestone-100 .combo-count {
-    font-size: 5rem;
+    font-size: 4rem;
   }
   
   .combo-milestone-100 .combo-label {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
+  }
+  
+  .combo-milestone-200 .combo-count {
+    font-size: 4.5rem;
+  }
+  
+  .combo-milestone-200 .combo-label {
+    font-size: 1.7rem;
   }
 }
