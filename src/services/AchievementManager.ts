@@ -220,10 +220,14 @@ export class AchievementManager {
   updateProgress(type: AchievementType, value: number): void {
     for (const achievement of this.achievements.values()) {
       if (achievement.type === type && !achievement.unlocked) {
+        const oldProgress = achievement.progress;
+        
+        // 更新进度（只增不减）
         achievement.progress = Math.max(achievement.progress, value);
         
-        // 检查是否达成
-        if (achievement.progress >= achievement.target) {
+        // 防止重复解锁：只有进度从未达标跨越到达标时才触发解锁
+        // Prevent duplicate unlocks: only trigger when progress crosses threshold from below to at/above target
+        if (oldProgress < achievement.target && achievement.progress >= achievement.target) {
           this.unlockAchievement(achievement.id);
         }
       }
