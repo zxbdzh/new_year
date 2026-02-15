@@ -71,11 +71,9 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
   const [leaderboard, setLeaderboard] = useState<PlayerInfo[]>([]);
-  const [isInitialized, setIsInitialized] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [countdownReady, setCountdownReady] = useState(false);
-  const [isMusicMuted, setIsMusicMuted] = useState(false);
   const [comboState, setComboState] = useState<ComboState>({
     count: 0,
     lastClickTime: 0,
@@ -106,11 +104,6 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
 
     try {
       console.log('[MultiplayerGame] 开始初始化引擎...');
-      
-      // 初始化静音状态
-      if (audioControllerRef.current) {
-        setIsMusicMuted(audioControllerRef.current.isMusicMuted());
-      }
       
       // 创建存储服务
       const storageService = new StorageService();
@@ -177,8 +170,6 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
       });
       
       comboSystemRef.current = comboSystem;
-      
-      setIsInitialized(true);
 
       console.log('[MultiplayerGame] 烟花引擎初始化成功');
     } catch (error) {
@@ -203,7 +194,6 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
       }
       // 重置初始化标志，允许重新初始化
       initializingRef.current = false;
-      setIsInitialized(false);
       setCountdownReady(false);
     };
   }, [audioController]); // 移除 isInitialized 依赖
@@ -232,24 +222,23 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
       
       const now = Date.now();
       
-      // 注册点击到连击系统
+      // 注册点击到连击系统并发射烟花
+      let fireworkId: string;
       if (comboSystemRef.current) {
         const newComboState = comboSystemRef.current.registerClick(now);
         setComboState(newComboState);
         
         // 根据连击状态发射烟花
         if (newComboState.isActive && newComboState.multiplier >= 2) {
-          engineRef.current.launchComboFireworks(x, y, newComboState.multiplier);
+          fireworkId = engineRef.current.launchComboFireworks(x, y, newComboState.multiplier);
         } else {
-          engineRef.current.launchFirework(x, y);
+          fireworkId = engineRef.current.launchFirework(x, y);
         }
       } else {
         // 没有连击系统时，发射普通烟花
-        engineRef.current.launchFirework(x, y);
+        fireworkId = engineRef.current.launchFirework(x, y);
       }
-
-      // 本地发射烟花
-      const fireworkId = engineRef.current.launchFirework(x, y);
+      
       console.log('[MultiplayerGame] 本地发射烟花:', fireworkId, { x, y });
 
       // 同步到其他玩家
@@ -528,13 +517,12 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
               onClick={() => {
                 if (audioControllerRef.current) {
                   audioControllerRef.current.toggleMusicMute();
-                  setIsMusicMuted(audioControllerRef.current.isMusicMuted());
                 }
               }}
               aria-label="静音/取消静音"
               title="静音/取消静音"
             >
-              {isMusicMuted ? (
+              {audioControllerRef.current?.isMusicMuted() ? (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M11 5L6 9H2v6h4l5 4V5z" />
                   <line x1="23" y1="9" x2="17" y2="15" />
