@@ -479,6 +479,14 @@
   min-width: 120px;
 }
 
+/* 游戏按钮中的图标 */
+.game-button svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+  flex-shrink: 0;
+}
+
 /* 按钮光效层 */
 .game-button::before {
   content: '';
