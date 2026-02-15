@@ -5,9 +5,9 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { Sparkles, Trophy, BarChart3, Volume2, VolumeX, Settings, RotateCcw, LogOut } from 'lucide-react';
 import { CountdownDisplay } from './CountdownDisplay';
 import { SettingsScreen, type SettingsData } from './SettingsScreen';
-import { Button } from './Button';
 import { FireworkGallery } from './FireworkGallery';
 import { AchievementPanel } from './AchievementPanel';
 import { StatisticsPanel } from './StatisticsPanel';
@@ -83,6 +83,9 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
   // 成就通知
   const [achievementNotification, setAchievementNotification] = useState<Achievement | null>(null);
   
+  // 追踪已触发的成就通知（防止重复触发）
+  const triggeredAchievementsRef = useRef<Set<string>>(new Set());
+  
   // 管理器引用
   const achievementManagerRef = useRef<AchievementManager | null>(null);
   const collectionManagerRef = useRef<FireworkCollectionManager | null>(null);
@@ -139,10 +142,14 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
         
         // 注册成就解锁回调
         achievementManager.onUnlock((achievement) => {
-          setAchievementNotification(achievement);
-          // 播放解锁音效
-          if (audioController) {
-            audioController.playExplosionSFX();
+          // 检查是否已经触发过此成就
+          if (!triggeredAchievementsRef.current.has(achievement.id)) {
+            triggeredAchievementsRef.current.add(achievement.id);
+            setAchievementNotification(achievement);
+            // 播放解锁音效
+            if (audioController) {
+              audioController.playExplosionSFX();
+            }
           }
         });
         
@@ -575,74 +582,50 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
 
         {/* 控制按钮 */}
         <div className="control-buttons">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="control-button-with-label"
+          <button
+            className="control-button"
             onClick={() => setShowGallery(true)}
-            ariaLabel="烟花收藏"
-            icon={<span>✨</span>}
+            aria-label="烟花收藏"
+            title="烟花收藏"
           >
-            收藏
-          </Button>
+            <Sparkles size={20} />
+          </button>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            className="control-button-with-label"
+          <button
+            className="control-button"
             onClick={() => setShowAchievements(true)}
-            ariaLabel="成就"
-            icon={<span>🏆</span>}
+            aria-label="成就"
+            title="成就"
           >
-            成就
-          </Button>
+            <Trophy size={20} />
+          </button>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            className="control-button-with-label"
+          <button
+            className="control-button"
             onClick={() => setShowStatistics(true)}
-            ariaLabel="统计"
-            icon={<span>📊</span>}
+            aria-label="统计"
+            title="统计"
           >
-            统计
-          </Button>
+            <BarChart3 size={20} />
+          </button>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            className="control-button-with-label mute-button"
+          <button
+            className="control-button mute-button"
             onClick={handleToggleMute}
-            ariaLabel={audioConfig.musicMuted ? '取消静音' : '静音'}
-            icon={
-              audioConfig.musicMuted ? (
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M10 4L6 8H2v4h4l4 4V4zm6 2l-2 2 2 2-2 2 2 2 2-2-2-2 2-2-2-2z"/>
-                </svg>
-              ) : (
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M10 4L6 8H2v4h4l4 4V4zm4 6c0-1.5-1-3-2-3.5v7c1-.5 2-2 2-3.5zm2 0c0-2.5-1.5-4.5-3.5-5.5v11c2-.5 3.5-3 3.5-5.5z"/>
-                </svg>
-              )
-            }
+            aria-label={audioConfig.musicMuted ? '取消静音' : '静音'}
+            title={audioConfig.musicMuted ? '取消静音' : '静音'}
           >
-            {audioConfig.musicMuted ? '已静音' : '音乐'}
-          </Button>
+            {audioConfig.musicMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+          </button>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            className="control-button-with-label settings-button"
+          <button
+            className="control-button settings-button"
             onClick={handleOpenSettings}
-            ariaLabel="设置"
-            icon={
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10 6c-2.2 0-4 1.8-4 4s1.8 4 4 4 4-1.8 4-4-1.8-4-4-4zm8-1l-2-1-1-2-2 1-2-1-2 1-1 2-2 1v2l2 1 1 2 2-1 2 1 2-1 1-2 2-1V5z"/>
-              </svg>
-            }
+            aria-label="设置"
+            title="设置"
           >
-            设置
-          </Button>
+            <Settings size={20} />
+          </button>
         </div>
       </div>
 
@@ -674,33 +657,25 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
 
       {/* 底部按钮 */}
       <div className="bottom-buttons">
-        <Button
-          variant="secondary"
+        <button
           className="game-button restart-button"
           onClick={handleRestart}
-          ariaLabel="重新开始"
-          icon={
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M8 2a6 6 0 1 0 6 6h-2a4 4 0 1 1-4-4V2zm0-2v4l4-4-4-4z"/>
-            </svg>
-          }
+          aria-label="重新开始"
+          title="重新开始"
         >
-          重新开始
-        </Button>
+          <RotateCcw size={18} />
+          <span>重新开始</span>
+        </button>
         
-        <Button
-          variant="ghost"
+        <button
           className="game-button exit-button"
           onClick={handleExit}
-          ariaLabel="退出游戏"
-          icon={
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M6 2v2H2v8h4v2H0V2h6zm4 0l6 6-6 6v-4H6V6h4V2z"/>
-            </svg>
-          }
+          aria-label="退出游戏"
+          title="退出游戏"
         >
-          退出
-        </Button>
+          <LogOut size={18} />
+          <span>退出</span>
+        </button>
       </div>
 
       {/* 设置界面 */}
