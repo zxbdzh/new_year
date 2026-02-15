@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
+import { Sparkles } from 'lucide-react';
 import { CountdownEngine } from '../engines/CountdownEngine';
 import type { CountdownTime } from '../types';
 import './CountdownDisplay.css';
@@ -64,6 +65,11 @@ export function CountdownDisplay({ engine, onCountdownZero, skinId = 'lantern' }
 
   return (
     <div className={skinClass}>
+      {/* 装饰图标 */}
+      <div className="countdown-icon">
+        <Sparkles size={32} />
+      </div>
+      
       {/* 倒计时标题 */}
       <div className="countdown-title">新年倒计时：</div>
       
