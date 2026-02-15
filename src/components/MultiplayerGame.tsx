@@ -50,6 +50,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
   const countdownEngineRef = useRef<CountdownEngine | null>(null);
   const performanceOptimizerRef = useRef<PerformanceOptimizer | null>(null);
   const storageServiceRef = useRef<StorageService | null>(null);
+  const audioControllerRef = useRef<any>(audioController);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
   const [leaderboard, setLeaderboard] = useState<PlayerInfo[]>([]);

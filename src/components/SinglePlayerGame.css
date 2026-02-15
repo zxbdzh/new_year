@@ -373,7 +373,7 @@
   transform: translateX(-50%);
   display: flex;
   gap: 1rem;
-  z-index: 10;
+  z-index: 100;
   pointer-events: none;
 }
 

@@ -261,69 +261,52 @@
 }
 
 /* ========================================
-   生肖皮肤 - 紫金渐变主题
+   生肖皮肤 - 青花瓷主题（优雅蓝白）
    ======================================== */
 .countdown-display--zodiac .countdown-container {
   background: linear-gradient(135deg, 
-    rgba(30, 20, 40, 0.9) 0%, 
-    rgba(40, 25, 35, 0.9) 100%);
-  border: 1.5px solid;
-  border-image: linear-gradient(135deg, 
-    rgba(147, 112, 219, 0.5) 0%, 
-    rgba(255, 215, 0, 0.5) 50%,
-    rgba(147, 112, 219, 0.5) 100%) 1;
+    rgba(15, 30, 50, 0.92) 0%, 
+    rgba(20, 40, 65, 0.92) 50%,
+    rgba(15, 30, 50, 0.92) 100%);
+  border-color: rgba(100, 180, 255, 0.4);
   box-shadow: 
     0 8px 32px rgba(0, 0, 0, 0.5),
-    0 0 60px rgba(147, 112, 219, 0.25),
-    0 0 40px rgba(255, 215, 0, 0.15);
+    0 0 0 1px rgba(100, 180, 255, 0.15) inset,
+    0 0 60px rgba(100, 180, 255, 0.3),
+    0 0 40px rgba(200, 230, 255, 0.2);
 }
 
 .countdown-display--zodiac .countdown-container::before {
   background: radial-gradient(circle at center, 
-    rgba(147, 112, 219, 0.12) 0%, 
-    rgba(255, 215, 0, 0.08) 50%,
+    rgba(100, 180, 255, 0.15) 0%, 
+    rgba(200, 230, 255, 0.08) 40%,
     transparent 70%);
 }
 
 .countdown-display--zodiac .countdown-title {
-  background: linear-gradient(135deg, 
-    #9370DB 0%, 
-    #FFD700 50%, 
-    #9370DB 100%);
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: gradient-flow 3s ease-in-out infinite;
-  filter: drop-shadow(0 0 15px rgba(147, 112, 219, 0.5));
+  color: #C8E6FF;
+  text-shadow: 
+    0 0 20px rgba(100, 180, 255, 0.8),
+    0 0 40px rgba(100, 180, 255, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .countdown-display--zodiac .time-value {
-  background: linear-gradient(135deg, 
-    #9370DB 0%, 
-    #FFD700 50%, 
-    #9370DB 100%);
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: gradient-flow 3s ease-in-out infinite, subtle-float 4s ease-in-out infinite;
-  filter: drop-shadow(0 0 30px rgba(147, 112, 219, 0.6))
-          drop-shadow(0 0 20px rgba(255, 215, 0, 0.4));
-}
-
-@keyframes gradient-flow {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+  color: #E0F2FF;
+  text-shadow: 
+    0 0 30px rgba(100, 180, 255, 1),
+    0 0 60px rgba(100, 180, 255, 0.7),
+    0 0 90px rgba(100, 180, 255, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.7);
 }
 
 .countdown-display--zodiac .time-separator {
-  color: rgba(255, 215, 0, 0.8);
-  text-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+  color: rgba(100, 180, 255, 0.8);
+  text-shadow: 0 0 20px rgba(100, 180, 255, 0.7);
 }
 
 .countdown-display--zodiac .time-label {
-  color: rgba(221, 160, 221, 0.7);
+  color: rgba(200, 230, 255, 0.75);
 }
 
 /* 装饰图标 */
@@ -353,8 +336,8 @@
 }
 
 .countdown-display--zodiac .countdown-icon {
-  color: rgba(147, 112, 219, 0.7);
-  filter: drop-shadow(0 0 10px rgba(147, 112, 219, 0.5));
+  color: rgba(100, 180, 255, 0.8);
+  filter: drop-shadow(0 0 10px rgba(100, 180, 255, 0.6));
 }
 
 /* ========================================

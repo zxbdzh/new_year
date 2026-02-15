@@ -86,10 +86,10 @@
 
 @keyframes iconPop {
   0% {
-    transform: scale(0) rotate(-180deg);
+    transform: scale(0);
   }
   100% {
-    transform: scale(1) rotate(0deg);
+    transform: scale(1);
   }
 }
 
@@ -156,11 +156,19 @@
   justify-content: center;
   line-height: 1;
   transition: all 0.3s ease;
+  padding: 0;
+}
+
+.notification-close svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+  display: block;
 }
 
 .notification-close:hover {
   background: rgba(255, 0, 0, 0.3);
-  transform: rotate(90deg) scale(1.1);
+  transform: scale(1.1);
 }
 
 /* 响应式设计 */
