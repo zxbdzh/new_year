@@ -63,7 +63,8 @@
 }
 
 /* 确保图标可见 - lucide-react图标样式 */
-.control-button svg {
+.control-button svg,
+.control-button svg path {
   width: 20px !important;
   height: 20px !important;
   color: #FFFFFF !important;
@@ -79,7 +80,12 @@
   visibility: visible !important;
 }
 
-.control-button:hover svg {
+.control-button svg {
+  flex-shrink: 0;
+}
+
+.control-button:hover svg,
+.control-button:hover svg path {
   color: #E2E8F0 !important;
   stroke: currentColor !important;
   filter: drop-shadow(0 0 10px rgba(255, 255, 255, 1)) 
@@ -443,12 +449,22 @@
 }
 
 /* 静音按钮图标 */
-.single-player-game .mute-button-game svg {
+.single-player-game .mute-button-game svg,
+.single-player-game .mute-button-game svg path {
   width: 28px;
   height: 28px;
   color: #FFFFFF !important;
+  stroke: currentColor !important;
+  stroke-width: 2 !important;
+  fill: none !important;
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.9));
-  stroke-width: 2;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.single-player-game .mute-button-game svg {
+  flex-shrink: 0;
 }
 
 /* 游戏按钮 - 现代化设计 + Neon Glow */
