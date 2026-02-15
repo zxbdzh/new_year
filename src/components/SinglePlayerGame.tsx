@@ -86,6 +86,9 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
   // 追踪已触发的成就通知（防止重复触发）
   const triggeredAchievementsRef = useRef<Set<string>>(new Set());
   
+  // 追踪是否已初始化（防止StrictMode双重初始化）
+  const hasInitializedRef = useRef(false);
+  
   // 管理器引用
   const achievementManagerRef = useRef<AchievementManager | null>(null);
   const collectionManagerRef = useRef<FireworkCollectionManager | null>(null);
@@ -106,6 +109,12 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
 
   // 初始化所有引擎和服务
   useEffect(() => {
+    // 防止StrictMode双重初始化
+    if (hasInitializedRef.current) {
+      return;
+    }
+    hasInitializedRef.current = true;
+    
     const initializeGame = async () => {
       try {
         // 创建存储服务
@@ -186,8 +195,8 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
           gamesPlayed: 1 // 当前游戏
         });
         
-        // 更新游戏时长成就（只在首次加载时更新，避免重复触发）
-        if (stats.totalPlayTime && stats.totalPlayTime > 0 && !achievementManager.getAchievement('playtime_300')?.unlocked) {
+        // 更新游戏时长成就
+        if (stats.totalPlayTime && stats.totalPlayTime > 0) {
           achievementManager.updateProgress('playtime', stats.totalPlayTime);
         }
         
