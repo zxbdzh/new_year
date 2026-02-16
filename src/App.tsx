@@ -10,7 +10,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { setMode } from './store/gameSlice';
-import { toggleMusicMute, updateAudioConfig } from './store/audioSlice';
 import { setTheme, setSkin } from './store/themeSlice';
 import { LaunchScreen } from './components/LaunchScreen';
 import { ModeSelection } from './components/ModeSelection';
@@ -22,7 +21,7 @@ import { NetworkSynchronizer } from './services/NetworkSynchronizer';
 import { AudioController } from './services/AudioController';
 import { StorageService } from './services/StorageService';
 import { ThemeManager } from './services/ThemeManager';
-import { getDefaultSettings, mergeWithDefaults } from './utils/defaultSettings';
+import { mergeWithDefaults } from './utils/defaultSettings';
 import type { GameMode } from './types/GameTypes';
 import './App.css';
 
@@ -32,7 +31,6 @@ import './App.css';
 function App() {
   const dispatch = useAppDispatch();
   const mode = useAppSelector((state) => state.game.mode);
-  const isMusicMuted = useAppSelector((state) => state.audio.config.musicMuted);
   const availableThemes = useAppSelector(
     (state) => state.theme.availableThemes
   );
@@ -105,19 +103,11 @@ function App() {
             }
           }
 
-          // 恢复音频配置
-          if (settings.audioConfig) {
-            dispatch(updateAudioConfig(settings.audioConfig));
-            console.log('[App] 已恢复音频配置');
-          }
-
           console.log('[App] 设置加载完成，手动偏移:', settings.manualOffset);
         } catch (error) {
           console.error('[App] 加载设置失败，使用默认设置:', error);
           // 使用默认设置
-          const defaults = getDefaultSettings();
           themeManager.applyTheme(currentTheme);
-          dispatch(updateAudioConfig(defaults.audioConfig));
         }
 
         // 创建音频控制器
@@ -224,29 +214,6 @@ function App() {
     },
     [dispatch]
   );
-
-  /**
-   * 处理静音切换
-   */
-  const handleToggleMute = useCallback(() => {
-    // 先更新Redux状态
-    dispatch(toggleMusicMute());
-
-    if (audioControllerRef.current) {
-      // 切换AudioController的静音状态
-      audioControllerRef.current.toggleMusicMute();
-
-      // 根据切换后的状态决定播放或停止
-      // isMusicMuted是切换前的状态，所以逻辑相反
-      if (isMusicMuted) {
-        // 之前是静音，现在取消静音，播放音乐
-        audioControllerRef.current.playMusic();
-      } else {
-        // 之前是未静音，现在静音了，停止音乐
-        audioControllerRef.current.stopMusic();
-      }
-    }
-  }, [dispatch, isMusicMuted]);
 
   /**
    * 处理游戏结束
