@@ -1,11 +1,15 @@
 /**
  * 成就管理器
  * Feature: achievement-system
- * 
+ *
  * 管理游戏成就的解锁、进度追踪和通知
  */
 
-import type { Achievement, AchievementData, AchievementType } from '../types/AchievementTypes';
+import type {
+  Achievement,
+  AchievementData,
+  AchievementType,
+} from '../types/AchievementTypes';
 import type { StorageService } from './StorageService';
 
 /**
@@ -20,12 +24,14 @@ export class AchievementManager {
   private achievements: Map<string, Achievement>;
   private unlockCallbacks: Set<AchievementUnlockCallback>;
   private storageService: StorageService;
+  private notifiedAchievements: Set<string>; // 追踪已通知的成就，防止重复通知
 
   constructor(storageService: StorageService) {
     this.achievements = new Map();
     this.unlockCallbacks = new Set();
     this.storageService = storageService;
-    
+    this.notifiedAchievements = new Set(); // 初始化通知追踪集合
+
     // 初始化默认成就
     this.initializeDefaultAchievements();
   }
@@ -34,7 +40,10 @@ export class AchievementManager {
    * 初始化默认成就
    */
   private initializeDefaultAchievements(): void {
-    const defaultAchievements: Omit<Achievement, 'progress' | 'unlocked' | 'unlockedAt'>[] = [
+    const defaultAchievements: Omit<
+      Achievement,
+      'progress' | 'unlocked' | 'unlockedAt'
+    >[] = [
       // 点击成就
       {
         id: 'clicks_100',
@@ -44,7 +53,7 @@ export class AchievementManager {
         tier: 'bronze',
         target: 100,
         icon: '👆',
-        reward: '解锁流星型烟花'
+        reward: '解锁流星型烟花',
       },
       {
         id: 'clicks_1000',
@@ -54,7 +63,7 @@ export class AchievementManager {
         tier: 'silver',
         target: 1000,
         icon: '✨',
-        reward: '解锁心形烟花'
+        reward: '解锁心形烟花',
       },
       {
         id: 'clicks_10000',
@@ -64,9 +73,9 @@ export class AchievementManager {
         tier: 'gold',
         target: 10000,
         icon: '🌟',
-        reward: '解锁福字型烟花'
+        reward: '解锁福字型烟花',
       },
-      
+
       // 连击成就
       {
         id: 'combo_10',
@@ -75,7 +84,7 @@ export class AchievementManager {
         type: 'combo',
         tier: 'bronze',
         target: 10,
-        icon: '🔥'
+        icon: '🔥',
       },
       {
         id: 'combo_50',
@@ -84,7 +93,7 @@ export class AchievementManager {
         type: 'combo',
         tier: 'silver',
         target: 50,
-        icon: '💥'
+        icon: '💥',
       },
       {
         id: 'combo_100',
@@ -93,7 +102,7 @@ export class AchievementManager {
         type: 'combo',
         tier: 'gold',
         target: 100,
-        icon: '⚡'
+        icon: '⚡',
       },
       {
         id: 'combo_200',
@@ -103,9 +112,9 @@ export class AchievementManager {
         tier: 'platinum',
         target: 200,
         icon: '👑',
-        reward: '解锁红包型烟花'
+        reward: '解锁红包型烟花',
       },
-      
+
       // 收藏成就
       {
         id: 'collection_3',
@@ -114,7 +123,7 @@ export class AchievementManager {
         type: 'collection',
         tier: 'bronze',
         target: 3,
-        icon: '📦'
+        icon: '📦',
       },
       {
         id: 'collection_5',
@@ -123,9 +132,9 @@ export class AchievementManager {
         type: 'collection',
         tier: 'gold',
         target: 5,
-        icon: '🎆'
+        icon: '🎆',
       },
-      
+
       // 游戏时长成就
       {
         id: 'playtime_300',
@@ -134,7 +143,7 @@ export class AchievementManager {
         type: 'playtime',
         tier: 'bronze',
         target: 300, // 秒
-        icon: '⏰'
+        icon: '⏰',
       },
       {
         id: 'playtime_1800',
@@ -143,9 +152,9 @@ export class AchievementManager {
         type: 'playtime',
         tier: 'silver',
         target: 1800,
-        icon: '⏱️'
+        icon: '⏱️',
       },
-      
+
       // 特殊成就
       {
         id: 'special_newyear',
@@ -155,15 +164,15 @@ export class AchievementManager {
         tier: 'platinum',
         target: 1,
         icon: '🎊',
-        reward: '特殊新年祝福烟花'
-      }
+        reward: '特殊新年祝福烟花',
+      },
     ];
 
     for (const achievement of defaultAchievements) {
       this.achievements.set(achievement.id, {
         ...achievement,
         progress: 0,
-        unlocked: false
+        unlocked: false,
       });
     }
   }
@@ -176,12 +185,21 @@ export class AchievementManager {
       const data = await this.storageService.load();
       if (data?.achievements) {
         // 合并保存的成就数据
-        for (const [id, savedAchievement] of Object.entries(data.achievements)) {
+        for (const [id, savedAchievement] of Object.entries(
+          data.achievements
+        )) {
           const achievement = this.achievements.get(id);
           if (achievement) {
             achievement.progress = (savedAchievement as Achievement).progress;
             achievement.unlocked = (savedAchievement as Achievement).unlocked;
-            achievement.unlockedAt = (savedAchievement as Achievement).unlockedAt;
+            achievement.unlockedAt = (
+              savedAchievement as Achievement
+            ).unlockedAt;
+
+            // 如果已解锁，加入已通知集合
+            if (achievement.unlocked) {
+              this.notifiedAchievements.add(id);
+            }
           }
         }
       }
@@ -200,13 +218,13 @@ export class AchievementManager {
         console.warn('No data to save achievements to');
         return;
       }
-      
+
       // 转换Map为对象
       const achievementsObj: Record<string, Achievement> = {};
       for (const [id, achievement] of this.achievements.entries()) {
         achievementsObj[id] = achievement;
       }
-      
+
       data.achievements = achievementsObj;
       await this.storageService.save(data);
     } catch (error) {
@@ -216,7 +234,7 @@ export class AchievementManager {
 
   /**
    * 更新成就进度
-   * 
+   *
    * 防重复机制：
    * 1. 只处理未解锁的成就
    * 2. 只在进度从未达标跨越到达标时触发解锁
@@ -228,16 +246,21 @@ export class AchievementManager {
       if (achievement.type !== type || achievement.unlocked) {
         continue;
       }
-      
+
       const oldProgress = achievement.progress;
-      
+
       // 更新进度（只增不减）
       achievement.progress = Math.max(achievement.progress, value);
-      
+
       // 防止重复解锁：只有进度从未达标跨越到达标时才触发解锁
       // 关键检查：oldProgress < target && newProgress >= target
-      if (oldProgress < achievement.target && achievement.progress >= achievement.target) {
-        console.log(`[AchievementManager] Progress crossed threshold for ${achievement.id}: ${oldProgress} -> ${achievement.progress} (target: ${achievement.target})`);
+      if (
+        oldProgress < achievement.target &&
+        achievement.progress >= achievement.target
+      ) {
+        console.log(
+          `[AchievementManager] Progress crossed threshold for ${achievement.id}: ${oldProgress} -> ${achievement.progress} (target: ${achievement.target})`
+        );
         this.unlockAchievement(achievement.id);
       }
     }
@@ -245,7 +268,7 @@ export class AchievementManager {
 
   /**
    * 解锁成就
-   * 
+   *
    * 防重复机制的最后一道防线：
    * - 严格检查unlocked标志
    * - 记录详细日志便于调试
@@ -257,10 +280,12 @@ export class AchievementManager {
       console.warn(`[AchievementManager] Achievement ${id} not found`);
       return;
     }
-    
+
     // 严格检查是否已解锁 - 防重复的关键
     if (achievement.unlocked) {
-      console.log(`[AchievementManager] Achievement ${id} already unlocked, skipping notification`);
+      console.log(
+        `[AchievementManager] Achievement ${id} already unlocked, skipping notification`
+      );
       return;
     }
 
@@ -269,7 +294,9 @@ export class AchievementManager {
     achievement.unlockedAt = Date.now();
     achievement.progress = achievement.target;
 
-    console.log(`[AchievementManager] ✅ Unlocked achievement: ${achievement.name} (${id})`);
+    console.log(
+      `[AchievementManager] ✅ Unlocked achievement: ${achievement.name} (${id})`
+    );
 
     // 触发回调（只在首次解锁时）
     this.triggerUnlockCallbacks(achievement);
@@ -282,6 +309,18 @@ export class AchievementManager {
    * 触发解锁回调
    */
   private triggerUnlockCallbacks(achievement: Achievement): void {
+    // 检查是否已经通知过此成就
+    if (this.notifiedAchievements.has(achievement.id)) {
+      console.log(
+        `[AchievementManager] Achievement ${achievement.id} already notified, skipping callback`
+      );
+      return;
+    }
+
+    // 标记为已通知
+    this.notifiedAchievements.add(achievement.id);
+
+    // 触发回调
     for (const callback of this.unlockCallbacks) {
       try {
         callback(achievement);
@@ -316,7 +355,7 @@ export class AchievementManager {
    * 获取已解锁成就
    */
   getUnlockedAchievements(): Achievement[] {
-    return this.getAllAchievements().filter(a => a.unlocked);
+    return this.getAllAchievements().filter((a) => a.unlocked);
   }
 
   /**
@@ -326,8 +365,8 @@ export class AchievementManager {
     const achievements = this.getAllAchievements();
     return {
       achievements: this.achievements,
-      totalUnlocked: achievements.filter(a => a.unlocked).length,
-      totalCount: achievements.length
+      totalUnlocked: achievements.filter((a) => a.unlocked).length,
+      totalCount: achievements.length,
     };
   }
 

@@ -5,7 +5,16 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Sparkles, Trophy, BarChart3, Volume2, VolumeX, Settings, RotateCcw, LogOut } from 'lucide-react';
+import {
+  Sparkles,
+  Trophy,
+  BarChart3,
+  Volume2,
+  VolumeX,
+  Settings,
+  RotateCcw,
+  LogOut,
+} from 'lucide-react';
 import { CountdownDisplay } from './CountdownDisplay';
 import { SettingsScreen, type SettingsData } from './SettingsScreen';
 import { FireworkGallery } from './FireworkGallery';
@@ -15,7 +24,6 @@ import { AchievementNotification } from './AchievementNotification';
 import { CountdownEngine } from '../engines/CountdownEngine';
 import { FireworksEngine } from '../engines/FireworksEngine';
 import { ComboSystem } from '../engines/ComboSystem';
-import { AudioController } from '../services/AudioController';
 import { StatisticsTracker } from '../services/StatisticsTracker';
 import { StorageService } from '../services/StorageService';
 import { PerformanceOptimizer } from '../services/PerformanceOptimizer';
@@ -36,34 +44,40 @@ interface SinglePlayerGameProps {
   onExit: () => void;
   /** 游戏结束回调 */
   onGameEnd?: () => void;
+  /** 音频控制器实例（从App.tsx传入，保持单例） */
+  audioController?: any;
 }
 
 /**
  * 单人游戏组件
  * 整合倒计时、烟花引擎、连击系统和统计追踪
  */
-export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
+export function SinglePlayerGame({
+  onExit,
+  onGameEnd,
+  audioController: propAudioController,
+}: SinglePlayerGameProps) {
   const dispatch = useAppDispatch();
   const audioConfig = useAppSelector((state) => state.audio.config);
   const currentTheme = useAppSelector((state) => state.theme.currentTheme);
   const currentSkin = useAppSelector((state) => state.theme.currentSkin);
-  
+
   // Canvas引用
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  
+
   // 引擎实例引用
   const countdownEngineRef = useRef<CountdownEngine | null>(null);
   const fireworksEngineRef = useRef<FireworksEngine | null>(null);
   const comboSystemRef = useRef<ComboSystem | null>(null);
-  const audioControllerRef = useRef<AudioController | null>(null);
+  const audioControllerRef = useRef<any>(propAudioController);
   const statisticsTrackerRef = useRef<StatisticsTracker | null>(null);
   const performanceOptimizerRef = useRef<PerformanceOptimizer | null>(null);
   const storageServiceRef = useRef<StorageService | null>(null);
   const themeManagerRef = useRef<ThemeManager | null>(null);
-  
+
   // 游戏时间追踪
   const gameStartTimeRef = useRef<number>(Date.now());
-  
+
   // 连击状态
   const [comboState, setComboState] = useState<ComboState>({
     count: 0,
@@ -71,39 +85,39 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
     isActive: false,
     multiplier: 1,
   });
-  
+
   // 设置按钮状态
   const [showSettings, setShowSettings] = useState(false);
-  
+
   // 新功能面板状态
   const [showGallery, setShowGallery] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   const [showStatistics, setShowStatistics] = useState(false);
-  
+
   // 成就通知
-  const [achievementNotification, setAchievementNotification] = useState<Achievement | null>(null);
-  
-  // 追踪已触发的成就通知（防止重复触发）
-  const triggeredAchievementsRef = useRef<Set<string>>(new Set());
-  
+  const [achievementNotification, setAchievementNotification] =
+    useState<Achievement | null>(null);
+
   // 追踪是否已初始化（防止StrictMode双重初始化）
   const hasInitializedRef = useRef(false);
-  
+
   // 管理器引用
   const achievementManagerRef = useRef<AchievementManager | null>(null);
   const collectionManagerRef = useRef<FireworkCollectionManager | null>(null);
-  
+
   // 数据状态
-  const [collectionItems, setCollectionItems] = useState<FireworkCollectionItem[]>([]);
+  const [collectionItems, setCollectionItems] = useState<
+    FireworkCollectionItem[]
+  >([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [statistics, setStatistics] = useState({
     totalClicks: 0,
     maxCombo: 0,
     totalPlayTime: 0,
     fireworksLaunched: 0,
-    gamesPlayed: 0
+    gamesPlayed: 0,
   });
-  
+
   // 引擎就绪状态
   const [enginesReady, setEnginesReady] = useState(false);
 
@@ -114,77 +128,70 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
       return;
     }
     hasInitializedRef.current = true;
-    
+
     const initializeGame = async () => {
       try {
         // 创建存储服务
         const storageService = new StorageService();
         storageServiceRef.current = storageService;
-        
+
         // 创建性能优化器
         const performanceOptimizer = new PerformanceOptimizer();
         performanceOptimizerRef.current = performanceOptimizer;
-        
+
         // 创建主题管理器
         const themeManager = new ThemeManager();
         themeManagerRef.current = themeManager;
-        
-        // 创建音频控制器
-        const audioController = new AudioController(storageService);
-        await audioController.initialize();
-        await audioController.resumeContext();
+
+        // 使用传入的音频控制器（单例模式）
+        const audioController = propAudioController;
         audioControllerRef.current = audioController;
-        
-        // 同步 AudioController 的配置到 Redux store
-        const loadedConfig = audioController.getConfig();
-        dispatch(updateAudioConfig(loadedConfig));
-        
+
+        if (audioController) {
+          // 确保音频控制器已初始化
+          await audioController.resumeContext();
+
+          // 同步 AudioController 的配置到 Redux store
+          const loadedConfig = audioController.getConfig();
+          dispatch(updateAudioConfig(loadedConfig));
+        }
+
         // 创建统计追踪器
         const statisticsTracker = new StatisticsTracker(storageService);
         await statisticsTracker.load();
         statisticsTrackerRef.current = statisticsTracker;
-        
+
         // 创建成就管理器
         const achievementManager = new AchievementManager(storageService);
         await achievementManager.load();
         achievementManagerRef.current = achievementManager;
-        
-        // 初始化已触发成就列表（防止重复通知）
-        const unlockedAchievements = achievementManager.getUnlockedAchievements();
-        for (const achievement of unlockedAchievements) {
-          triggeredAchievementsRef.current.add(achievement.id);
-        }
-        
-        // 注册成就解锁回调（使用ref确保只注册一次）
+
+        // 注册成就解锁回调（AchievementManager内部已处理通知去重）
         const handleAchievementUnlock = (achievement: Achievement) => {
-          // 检查是否已经触发过此成就（使用更严格的检查）
-          if (!triggeredAchievementsRef.current.has(achievement.id)) {
-            triggeredAchievementsRef.current.add(achievement.id);
-            setAchievementNotification(achievement);
-            
-            // 播放解锁音效
-            if (audioController) {
-              audioController.playExplosionSFX();
-            }
+          setAchievementNotification(achievement);
+
+          // 播放解锁音效
+          if (audioController) {
+            audioController.playExplosionSFX();
           }
         };
-        
+
         achievementManager.onUnlock(handleAchievementUnlock);
-        
+
         // 创建烟花收藏管理器
         const collectionManager = new FireworkCollectionManager(storageService);
         await collectionManager.load();
         collectionManagerRef.current = collectionManager;
-        
+
         // 注册烟花解锁回调
         collectionManager.onUnlock((item) => {
           console.log('Firework unlocked:', item.name);
         });
-        
+
         // 加载初始数据
         setAchievements(achievementManager.getAllAchievements());
         setCollectionItems(collectionManager.getAllItems());
-        
+
         // 加载统计数据
         const stats = statisticsTracker.getStatistics();
         setStatistics({
@@ -192,14 +199,14 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
           maxCombo: stats.maxCombo || 0,
           totalPlayTime: stats.totalPlayTime || 0,
           fireworksLaunched: 0, // 本次游戏发射的烟花数
-          gamesPlayed: 1 // 当前游戏
+          gamesPlayed: 1, // 当前游戏
         });
-        
+
         // 更新游戏时长成就
         if (stats.totalPlayTime && stats.totalPlayTime > 0) {
           achievementManager.updateProgress('playtime', stats.totalPlayTime);
         }
-        
+
         // 创建倒计时引擎
         const countdownEngine = new CountdownEngine({
           targetDate: CountdownEngine.getNextLunarNewYear(), // 自动计算下一个农历新年
@@ -207,15 +214,18 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
           manualOffset: 0,
         });
         countdownEngineRef.current = countdownEngine;
-        
+
         // 创建烟花引擎
         if (canvasRef.current) {
-          const fireworksEngine = new FireworksEngine(canvasRef.current, audioController);
+          const fireworksEngine = new FireworksEngine(
+            canvasRef.current,
+            audioController
+          );
           fireworksEngineRef.current = fireworksEngine;
           // 启动动画循环（即使没有烟花也保持canvas清空）
           fireworksEngine.startAnimation();
         }
-        
+
         // 创建连击系统
         const comboSystem = new ComboSystem({
           timeWindow: 3000, // 3秒时间窗口
@@ -226,29 +236,28 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
             [6, 5], // 6次以上：5倍（烟花雨）
           ]),
         });
-        
+
         // 注册连击回调
         comboSystem.onCombo((state) => {
           setComboState(state);
           dispatch(updateCombo(state));
-          
+
           // 记录最高连击
           if (statisticsTrackerRef.current) {
             statisticsTrackerRef.current.recordCombo(state.count);
           }
           dispatch(recordCombo(state.count));
         });
-        
+
         comboSystemRef.current = comboSystem;
-        
+
         // 播放背景音乐（使用从存储加载的配置）
-        if (!loadedConfig.musicMuted) {
+        if (audioController && !audioController.isMusicMuted()) {
           audioController.playMusic();
         }
-        
+
         // 标记引擎已就绪
         setEnginesReady(true);
-        
       } catch (error) {
         console.error('Failed to initialize game:', error);
       }
@@ -259,28 +268,30 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
     // 清理函数
     return () => {
       // 保存游戏时间
-      const playTime = Math.floor((Date.now() - gameStartTimeRef.current) / 1000);
+      const playTime = Math.floor(
+        (Date.now() - gameStartTimeRef.current) / 1000
+      );
       if (statisticsTrackerRef.current) {
         statisticsTrackerRef.current.recordPlayTime(playTime);
         statisticsTrackerRef.current.save().catch(console.error);
       }
-      
+
       // 更新游戏时长成就
       if (achievementManagerRef.current) {
         achievementManagerRef.current.updateProgress('playtime', playTime);
         achievementManagerRef.current.save().catch(console.error);
       }
-      
+
       // 保存收藏管理器
       if (collectionManagerRef.current) {
         collectionManagerRef.current.save().catch(console.error);
       }
-      
+
       // 保存音频配置（包括静音状态）
       if (audioControllerRef.current) {
         audioControllerRef.current.saveConfig().catch(console.error);
       }
-      
+
       // 清理引擎
       if (countdownEngineRef.current) {
         countdownEngineRef.current.stop();
@@ -323,109 +334,141 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
   }, []);
 
   // 处理点击/触摸事件
-  const handleCanvasInteraction = useCallback((x: number, y: number) => {
-    if (!fireworksEngineRef.current || !comboSystemRef.current) {
-      return;
-    }
+  const handleCanvasInteraction = useCallback(
+    (x: number, y: number) => {
+      if (!fireworksEngineRef.current || !comboSystemRef.current) {
+        return;
+      }
 
-    const now = Date.now();
-    
-    // 注册点击到连击系统
-    const newComboState = comboSystemRef.current.registerClick(now);
-    setComboState(newComboState);
-    dispatch(updateCombo(newComboState));
-    
-    // 记录点击到统计
-    if (statisticsTrackerRef.current) {
-      statisticsTrackerRef.current.recordClick();
-    }
-    dispatch(recordClick());
-    
-    // 更新统计数据
-    const newTotalClicks = statistics.totalClicks + 1;
-    const newMaxCombo = Math.max(statistics.maxCombo, newComboState.count);
-    const newFireworksLaunched = statistics.fireworksLaunched + 1;
-    
-    setStatistics(prev => ({
-      ...prev,
-      totalClicks: newTotalClicks,
-      maxCombo: newMaxCombo,
-      fireworksLaunched: newFireworksLaunched
-    }));
-    
-    // 更新成就进度
-    if (achievementManagerRef.current) {
-      achievementManagerRef.current.updateProgress('clicks', newTotalClicks);
-      
-      // 更新连击成就
-      if (newComboState.count > statistics.maxCombo) {
-        achievementManagerRef.current.updateProgress('combo', newComboState.count);
+      const now = Date.now();
+
+      // 注册点击到连击系统
+      const newComboState = comboSystemRef.current.registerClick(now);
+      setComboState(newComboState);
+      dispatch(updateCombo(newComboState));
+
+      // 记录点击到统计
+      if (statisticsTrackerRef.current) {
+        statisticsTrackerRef.current.recordClick();
       }
-      
-      // 更新收藏成就
+      dispatch(recordClick());
+
+      // 更新统计数据
+      const newTotalClicks = statistics.totalClicks + 1;
+      const newMaxCombo = Math.max(statistics.maxCombo, newComboState.count);
+      const newFireworksLaunched = statistics.fireworksLaunched + 1;
+
+      setStatistics((prev) => ({
+        ...prev,
+        totalClicks: newTotalClicks,
+        maxCombo: newMaxCombo,
+        fireworksLaunched: newFireworksLaunched,
+      }));
+
+      // 更新成就进度
+      if (achievementManagerRef.current) {
+        achievementManagerRef.current.updateProgress('clicks', newTotalClicks);
+
+        // 更新连击成就
+        if (newComboState.count > statistics.maxCombo) {
+          achievementManagerRef.current.updateProgress(
+            'combo',
+            newComboState.count
+          );
+        }
+
+        // 更新收藏成就
+        if (collectionManagerRef.current) {
+          const unlockedCount =
+            collectionManagerRef.current.getUnlockedItems().length;
+          achievementManagerRef.current.updateProgress(
+            'collection',
+            unlockedCount
+          );
+        }
+
+        // 刷新成就列表
+        setAchievements(achievementManagerRef.current.getAllAchievements());
+      }
+
+      // 检查烟花解锁
       if (collectionManagerRef.current) {
-        const unlockedCount = collectionManagerRef.current.getUnlockedItems().length;
-        achievementManagerRef.current.updateProgress('collection', unlockedCount);
+        // 解锁条件检查
+        if (
+          newTotalClicks >= 100 &&
+          !collectionManagerRef.current.isUnlocked('meteor')
+        ) {
+          collectionManagerRef.current.unlockFirework('meteor');
+          setCollectionItems(collectionManagerRef.current.getAllItems());
+        }
+        if (
+          newTotalClicks >= 1000 &&
+          !collectionManagerRef.current.isUnlocked('heart')
+        ) {
+          collectionManagerRef.current.unlockFirework('heart');
+          setCollectionItems(collectionManagerRef.current.getAllItems());
+        }
+        if (
+          newTotalClicks >= 10000 &&
+          !collectionManagerRef.current.isUnlocked('fortune')
+        ) {
+          collectionManagerRef.current.unlockFirework('fortune');
+          setCollectionItems(collectionManagerRef.current.getAllItems());
+        }
+
+        // 200连击解锁红包
+        if (
+          newComboState.count >= 200 &&
+          !collectionManagerRef.current.isUnlocked('redEnvelope')
+        ) {
+          collectionManagerRef.current.unlockFirework('redEnvelope');
+          setCollectionItems(collectionManagerRef.current.getAllItems());
+        }
       }
-      
-      // 刷新成就列表
-      setAchievements(achievementManagerRef.current.getAllAchievements());
-    }
-    
-    // 检查烟花解锁
-    if (collectionManagerRef.current) {
-      // 解锁条件检查
-      if (newTotalClicks >= 100 && !collectionManagerRef.current.isUnlocked('meteor')) {
-        collectionManagerRef.current.unlockFirework('meteor');
-        setCollectionItems(collectionManagerRef.current.getAllItems());
+
+      // 根据连击状态发射烟花
+      if (newComboState.isActive && newComboState.multiplier >= 2) {
+        // 连击增强烟花
+        fireworksEngineRef.current.launchComboFireworks(
+          x,
+          y,
+          newComboState.multiplier
+        );
+      } else {
+        // 普通烟花
+        fireworksEngineRef.current.launchFirework(x, y);
       }
-      if (newTotalClicks >= 1000 && !collectionManagerRef.current.isUnlocked('heart')) {
-        collectionManagerRef.current.unlockFirework('heart');
-        setCollectionItems(collectionManagerRef.current.getAllItems());
-      }
-      if (newTotalClicks >= 10000 && !collectionManagerRef.current.isUnlocked('fortune')) {
-        collectionManagerRef.current.unlockFirework('fortune');
-        setCollectionItems(collectionManagerRef.current.getAllItems());
-      }
-      
-      // 200连击解锁红包
-      if (newComboState.count >= 200 && !collectionManagerRef.current.isUnlocked('redEnvelope')) {
-        collectionManagerRef.current.unlockFirework('redEnvelope');
-        setCollectionItems(collectionManagerRef.current.getAllItems());
-      }
-    }
-    
-    // 根据连击状态发射烟花
-    if (newComboState.isActive && newComboState.multiplier >= 2) {
-      // 连击增强烟花
-      fireworksEngineRef.current.launchComboFireworks(x, y, newComboState.multiplier);
-    } else {
-      // 普通烟花
-      fireworksEngineRef.current.launchFirework(x, y);
-    }
-  }, [dispatch, statistics]);
+    },
+    [dispatch, statistics]
+  );
 
   // 鼠标点击事件
-  const handleMouseClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    handleCanvasInteraction(x, y);
-  }, [handleCanvasInteraction]);
+  const handleMouseClick = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      handleCanvasInteraction(x, y);
+    },
+    [handleCanvasInteraction]
+  );
 
   // 触摸事件
-  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (!rect || e.touches.length === 0) return;
-    
-    const touch = e.touches[0];
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
-    handleCanvasInteraction(x, y);
-  }, [handleCanvasInteraction]);
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent<HTMLCanvasElement>) => {
+      e.preventDefault();
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect || e.touches.length === 0) return;
+
+      const touch = e.touches[0];
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      handleCanvasInteraction(x, y);
+    },
+    [handleCanvasInteraction]
+  );
 
   // 倒计时归零处理
   const handleCountdownZero = useCallback(() => {
@@ -437,19 +480,19 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
   // 切换静音
   const handleToggleMute = useCallback(async () => {
     dispatch(toggleMusicMute());
-    
+
     if (audioControllerRef.current) {
       // 切换静音状态
       audioControllerRef.current.toggleMusicMute();
-      
+
       // 获取更新后的配置
       const updatedConfig = audioControllerRef.current.getConfig();
-      
+
       // 如果取消静音，播放音乐
       if (!updatedConfig.musicMuted) {
         audioControllerRef.current.playMusic();
       }
-      
+
       // 立即保存静音状态
       try {
         await audioControllerRef.current.saveConfig();
@@ -489,7 +532,7 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
         const profile = performanceOptimizerRef.current.getProfile();
         profile.level = settings.performanceLevel;
         performanceOptimizerRef.current.setProfile(profile);
-        
+
         // 更新烟花引擎的性能配置
         fireworksEngineRef.current.updatePerformanceProfile(profile);
       }
@@ -498,13 +541,14 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
       if (storageServiceRef.current) {
         try {
           let data = await storageServiceRef.current.load();
-          
+
           // 如果没有数据，使用默认值
           if (!data) {
-            const { getDefaultSettings } = await import('../utils/defaultSettings');
+            const { getDefaultSettings } =
+              await import('../utils/defaultSettings');
             data = getDefaultSettings();
           }
-          
+
           // 更新所有设置字段
           data.themeId = settings.themeId;
           data.skinId = settings.skinId;
@@ -516,7 +560,12 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
           };
           data.performanceProfile = {
             level: settings.performanceLevel,
-            maxParticles: settings.performanceLevel === 'low' ? 50 : settings.performanceLevel === 'high' ? 150 : 100,
+            maxParticles:
+              settings.performanceLevel === 'low'
+                ? 50
+                : settings.performanceLevel === 'high'
+                  ? 150
+                  : 100,
             maxFireworks: 5,
             useWebGL: false,
             particleSize: 3,
@@ -525,7 +574,7 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
           };
           data.manualOffset = settings.manualOffset;
           data.lastPlayedAt = Date.now();
-          
+
           await storageServiceRef.current.save(data);
           console.log('[SinglePlayerGame] 设置已保存');
         } catch (saveError) {
@@ -546,26 +595,25 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
       // 重新启动动画循环
       fireworksEngineRef.current.startAnimation();
     }
-    
+
     // 重置连击
     if (comboSystemRef.current) {
       comboSystemRef.current.reset();
     }
     dispatch(resetCombo());
-    
+
     setComboState({
       count: 0,
       lastClickTime: 0,
       isActive: false,
       multiplier: 1,
     });
-    
-    // 注意：不清除已触发的成就通知记录，避免重复通知
-    // clearTriggeredAchievements(); // 已移除
-    
+
+    // 注意：AchievementManager 内部已处理通知去重，无需额外处理
+
     // 重置游戏开始时间
     gameStartTimeRef.current = Date.now();
-    
+
     // 重新启动倒计时引擎
     if (countdownEngineRef.current) {
       countdownEngineRef.current.stop();
@@ -585,7 +633,7 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
       statisticsTrackerRef.current.recordPlayTime(playTime);
       statisticsTrackerRef.current.save().catch(console.error);
     }
-    
+
     onExit();
   }, [onExit]);
 
@@ -612,7 +660,7 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
           >
             <Sparkles size={20} />
           </button>
-          
+
           <button
             className="control-button"
             onClick={() => setShowAchievements(true)}
@@ -621,7 +669,7 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
           >
             <Trophy size={20} />
           </button>
-          
+
           <button
             className="control-button"
             onClick={() => setShowStatistics(true)}
@@ -630,16 +678,20 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
           >
             <BarChart3 size={20} />
           </button>
-          
+
           <button
             className="control-button mute-button"
             onClick={handleToggleMute}
             aria-label={audioConfig.musicMuted ? '取消静音' : '静音'}
             title={audioConfig.musicMuted ? '取消静音' : '静音'}
           >
-            {audioConfig.musicMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+            {audioConfig.musicMuted ? (
+              <VolumeX size={20} />
+            ) : (
+              <Volume2 size={20} />
+            )}
           </button>
-          
+
           <button
             className="control-button settings-button"
             onClick={handleOpenSettings}
@@ -649,7 +701,7 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
             <Settings size={20} />
           </button>
         </div>
-        
+
         {/* 倒计时显示 - 移到控制按钮下方 */}
         <div className="countdown-wrapper">
           {enginesReady && countdownEngineRef.current && (
@@ -664,25 +716,41 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
 
       {/* 连击显示 */}
       {comboState.isActive && (
-        <div className={`combo-display ${comboState.count >= 5 ? 'combo-milestone' : ''} ${comboState.count >= 10 ? 'combo-milestone-10' : ''} ${comboState.count >= 20 ? 'combo-milestone-20' : ''} ${comboState.count >= 50 ? 'combo-milestone-50' : ''} ${comboState.count >= 100 ? 'combo-milestone-100' : ''} ${comboState.count >= 200 ? 'combo-milestone-200' : ''}`}>
+        <div
+          className={`combo-display ${comboState.count >= 5 ? 'combo-milestone' : ''} ${comboState.count >= 10 ? 'combo-milestone-10' : ''} ${comboState.count >= 20 ? 'combo-milestone-20' : ''} ${comboState.count >= 50 ? 'combo-milestone-50' : ''} ${comboState.count >= 100 ? 'combo-milestone-100' : ''} ${comboState.count >= 200 ? 'combo-milestone-200' : ''}`}
+        >
           <div className="combo-count">{comboState.count}x</div>
           <div className="combo-label">
-            {comboState.count >= 200 ? '传说连击!' : 
-             comboState.count >= 100 ? '史诗连击!' : 
-             comboState.count >= 50 ? '超级连击!' : 
-             comboState.count >= 20 ? '疯狂连击!' : 
-             comboState.count >= 10 ? '极限连击!' : 
-             comboState.count >= 5 ? '完美连击!' : 
-             '连击!'}
+            {comboState.count >= 200
+              ? '传说连击!'
+              : comboState.count >= 100
+                ? '史诗连击!'
+                : comboState.count >= 50
+                  ? '超级连击!'
+                  : comboState.count >= 20
+                    ? '疯狂连击!'
+                    : comboState.count >= 10
+                      ? '极限连击!'
+                      : comboState.count >= 5
+                        ? '完美连击!'
+                        : '连击!'}
           </div>
           {comboState.count >= 5 && (
             <div className="combo-particles" aria-hidden="true">
-              {Array.from({ length: Math.min(comboState.count, 20) }).map((_, i) => (
-                <div key={i} className="combo-particle" style={{
-                  '--delay': `${i * 0.05}s`,
-                  '--angle': `${(360 / Math.min(comboState.count, 20)) * i}deg`
-                } as React.CSSProperties} />
-              ))}
+              {Array.from({ length: Math.min(comboState.count, 20) }).map(
+                (_, i) => (
+                  <div
+                    key={i}
+                    className="combo-particle"
+                    style={
+                      {
+                        '--delay': `${i * 0.05}s`,
+                        '--angle': `${(360 / Math.min(comboState.count, 20)) * i}deg`,
+                      } as React.CSSProperties
+                    }
+                  />
+                )
+              )}
             </div>
           )}
         </div>
@@ -699,7 +767,7 @@ export function SinglePlayerGame({ onExit, onGameEnd }: SinglePlayerGameProps) {
           <RotateCcw size={18} />
           <span>重新开始</span>
         </button>
-        
+
         <button
           className="game-button exit-button"
           onClick={handleExit}

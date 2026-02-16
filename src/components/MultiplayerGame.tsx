@@ -105,80 +105,101 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({
     
     initializingRef.current = true;
 
-    try {
-      console.log('[MultiplayerGame] 开始初始化引擎...');
-      
-      // 创建存储服务
-      const storageService = new StorageService();
-      storageServiceRef.current = storageService;
-
-      // 创建性能优化器
-      const performanceOptimizer = new PerformanceOptimizer();
-      performanceOptimizerRef.current = performanceOptimizer;
-
-      // 创建倒计时引擎
-      const countdownEngine = new CountdownEngine({
-        targetDate: CountdownEngine.getNextLunarNewYear(),
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        manualOffset: 0,
-      });
-      countdownEngineRef.current = countdownEngine;
-      setCountdownReady(true);
-      console.log('[MultiplayerGame] 倒计时引擎初始化成功');
-
-      // 创建烟花引擎
-      const engine = new FireworksEngine(canvasRef.current, audioController);
-      engineRef.current = engine;
-      console.log('[MultiplayerGame] engineRef.current 已设置:', engineRef.current);
-      
-      // 启动动画循环
-      engine.startAnimation();
-      
-      // 创建连击系统
-      const comboSystem = new ComboSystem({
-        timeWindow: 3000,
-        minClicks: 2,
-        comboMultipliers: new Map([
-          [2, 2],
-          [4, 3],
-          [6, 5],
-        ]),
-      });
-      
-      // 注册连击回调
-      comboSystem.onCombo((state) => {
-        setComboState(state);
+    const initializeEngines = async () => {
+      try {
+        console.log('[MultiplayerGame] 开始初始化引擎...');
         
-        // 连击里程碑播报
-        if (state.count === 10 || state.count === 50 || state.count === 100 || state.count === 200) {
-          // 发送连击播报到服务器
-          networkSynchronizer.sendComboMilestone(state.count);
-          
-          // 清除所有现有播报
-          setNotifications([]);
-          
-          // 标记有活跃的连击播报
-          setHasActiveComboNotification(true);
-          
-          const notification: NotificationItem = {
-            id: `combo-${Date.now()}`,
-            playerNickname: '你',
-            timestamp: Date.now(),
-            isCombo: true,
-            comboCount: state.count,
-            message: `[你] 达成${state.count}连击！`,
-          };
-          setNotifications([notification]);
+        if (!canvasRef.current) {
+          console.error('[MultiplayerGame] Canvas not available');
+          initializingRef.current = false;
+          return;
         }
-      });
-      
-      comboSystemRef.current = comboSystem;
+        
+        // 创建存储服务
+        const storageService = new StorageService();
+        storageServiceRef.current = storageService;
 
-      console.log('[MultiplayerGame] 烟花引擎初始化成功');
-    } catch (error) {
-      console.error('[MultiplayerGame] 烟花引擎初始化失败:', error);
-      initializingRef.current = false;
-    }
+        // 创建性能优化器
+        const performanceOptimizer = new PerformanceOptimizer();
+        performanceOptimizerRef.current = performanceOptimizer;
+
+        // 创建倒计时引擎
+        const countdownEngine = new CountdownEngine({
+          targetDate: CountdownEngine.getNextLunarNewYear(),
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          manualOffset: 0,
+        });
+        countdownEngineRef.current = countdownEngine;
+        setCountdownReady(true);
+        console.log('[MultiplayerGame] 倒计时引擎初始化成功');
+
+        // 创建烟花引擎
+        const engine = new FireworksEngine(canvasRef.current, audioController);
+        engineRef.current = engine;
+        console.log('[MultiplayerGame] engineRef.current 已设置:', engineRef.current);
+        
+        // 启动动画循环
+        engine.startAnimation();
+        
+        // 创建连击系统
+        const comboSystem = new ComboSystem({
+          timeWindow: 3000,
+          minClicks: 2,
+          comboMultipliers: new Map([
+            [2, 2],
+            [4, 3],
+            [6, 5],
+          ]),
+        });
+        
+        // 注册连击回调
+        comboSystem.onCombo((state) => {
+          setComboState(state);
+          
+          // 连击里程碑播报
+          if (state.count === 10 || state.count === 50 || state.count === 100 || state.count === 200) {
+            // 发送连击播报到服务器
+            networkSynchronizer.sendComboMilestone(state.count);
+            
+            // 清除所有现有播报
+            setNotifications([]);
+            
+            // 标记有活跃的连击播报
+            setHasActiveComboNotification(true);
+            
+            const notification: NotificationItem = {
+              id: `combo-${Date.now()}`,
+              playerNickname: '你',
+              timestamp: Date.now(),
+              isCombo: true,
+              comboCount: state.count,
+              message: `[你] 达成${state.count}连击！`,
+            };
+            setNotifications([notification]);
+          }
+        });
+        
+        comboSystemRef.current = comboSystem;
+
+        // 播放背景音乐（如果未静音）
+        if (audioController && !isMusicMuted) {
+          try {
+            await audioController.resumeContext();
+            audioController.playMusic();
+            console.log('[MultiplayerGame] 背景音乐已启动');
+          } catch (error) {
+            console.error('[MultiplayerGame] 播放音乐失败:', error);
+          }
+        }
+
+        console.log('[MultiplayerGame] 烟花引擎初始化成功');
+      } catch (error) {
+        console.error('[MultiplayerGame] 烟花引擎初始化失败:', error);
+        initializingRef.current = false;
+      }
+    };
+
+    initializeEngines();
 
     return () => {
       console.log('[MultiplayerGame] 清理函数运行');
