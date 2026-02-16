@@ -153,11 +153,15 @@ export class NetworkSynchronizer {
     return new Promise((resolve, reject) => {
       try {
         // 创建Socket.io连接
-        // 注意：如果 VITE_SERVER_URL 包含路径（如 /newyear-game/），
-        // Socket.io 会自动将其添加到连接路径中
-        // 配合 Nginx 的 proxy_pass 转发，服务器端使用默认路径 /socket.io/
+        // 从服务器URL中提取路径前缀，构建正确的Socket.io path
+        const serverUrlObj = new URL(this.config.serverUrl);
+        const pathPrefix = serverUrlObj.pathname.replace(/\/$/, ''); // 移除尾部斜杠
+        const socketPath = pathPrefix
+          ? `${pathPrefix}/socket.io/`
+          : '/socket.io/';
+
         this.socket = io(this.config.serverUrl, {
-          path: '/socket.io/',
+          path: socketPath,
           transports: ['websocket', 'polling'],
           reconnection: false, // 手动处理重连
           timeout: 10000,
