@@ -153,25 +153,13 @@ export class NetworkSynchronizer {
     return new Promise((resolve, reject) => {
       try {
         // 创建Socket.io连接
-        // 当VITE_SERVER_URL包含路径时，需要设置path参数
-        const serverUrlObj = new URL(this.config.serverUrl);
-        const pathPrefix = serverUrlObj.pathname.replace(/\/$/, ''); // 移除尾部斜杠
-        const socketPath = pathPrefix
-          ? `${pathPrefix}/socket.io/`
-          : '/socket.io/';
-
         console.log('[NetworkSynchronizer] Socket.io 连接配置:');
-        console.log('  base URL:', this.config.serverUrl);
-        console.log('  path:', socketPath);
-        console.log(
-          '  预期连接:',
-          `${serverUrlObj.protocol}//${serverUrlObj.host}${socketPath}`
-        );
+        console.log('  服务器 URL:', this.config.serverUrl);
 
         this.socket = io(this.config.serverUrl, {
-          path: socketPath,
+          path: '/socket.io/',
           transports: ['websocket', 'polling'],
-          reconnection: false, // 手动处理重连
+          reconnection: false,
           timeout: 10000,
         });
 

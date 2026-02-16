@@ -1,10 +1,8 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// 部署路径配置
-// 如果应用部署在子路径，修改此值
-// 例如：部署在 https://your-site.com/newyear-game/，则设置为 '/newyear-game/'
-const base = '/newyear-game/';
+// 部署路径配置：使用根路径，让 Socket.io 自己处理
+const base = '/';
 
 // https://vite.dev/config/
 export default defineConfig({

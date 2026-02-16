@@ -64,6 +64,7 @@ const httpServer = createServer(app);
 const socketPath = process.env.SOCKET_IO_PATH || '/socket.io/';
 
 console.log('[服务器配置] Socket.io path:', socketPath);
+console.log('[服务器配置] path 类型:', typeof socketPath);
 console.log('[服务器配置] CORS origin:', config.corsOrigin);
 
 const io = new Server(httpServer, {
