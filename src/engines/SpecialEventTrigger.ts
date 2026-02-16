@@ -1,12 +1,11 @@
 /**
  * 特殊事件触发器
  * Feature: new-year-fireworks-game
- * 
+ *
  * 在特定时间触发特殊效果（整点烟花雨、10分钟倒计时特效等）
  */
 
 import type { CountdownTime } from '../types/CountdownTypes';
-import type { CountdownEngine } from './CountdownEngine';
 
 /**
  * 特殊事件接口
@@ -26,20 +25,17 @@ export interface SpecialEvent {
 
 /**
  * 特殊事件触发器类
- * 
+ *
  * 负责注册、检查和触发特殊事件
  */
 export class SpecialEventTrigger {
   private events: Map<string, SpecialEvent>;
-  private countdownEngine: CountdownEngine;
 
   /**
    * 构造函数
-   * @param countdownEngine 倒计时引擎实例
    */
-  constructor(countdownEngine: CountdownEngine) {
+  constructor() {
     this.events = new Map();
-    this.countdownEngine = countdownEngine;
   }
 
   /**
@@ -79,7 +75,7 @@ export class SpecialEventTrigger {
    * @returns 已触发的事件数组
    */
   getTriggeredEvents(): SpecialEvent[] {
-    return Array.from(this.events.values()).filter(event => event.triggered);
+    return Array.from(this.events.values()).filter((event) => event.triggered);
   }
 
   /**
@@ -133,13 +129,13 @@ export function createHourlyFireworkRainEvent(
           fireworksEngine.launchFirework(x, y);
         }, i * 200);
       }
-      
+
       // 播放祝福音频（如果提供了音频控制器）
       if (audioController) {
         audioController.playSFX('success');
       }
     },
-    triggered: false
+    triggered: false,
   };
 }
 
@@ -161,17 +157,20 @@ export function createTenMinuteCountdownEvent(
     },
     effect: () => {
       // 触发特殊倒计时效果
-      if (countdownDisplay && typeof countdownDisplay.enableSpecialEffect === 'function') {
+      if (
+        countdownDisplay &&
+        typeof countdownDisplay.enableSpecialEffect === 'function'
+      ) {
         countdownDisplay.enableSpecialEffect();
       }
-      
+
       // 播放倒计时警告音效
       if (audioController) {
         audioController.playSFX('click');
       }
-      
+
       console.log('10分钟倒计时特效已触发！');
     },
-    triggered: false
+    triggered: false,
   };
 }

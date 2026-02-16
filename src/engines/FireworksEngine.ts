@@ -1,12 +1,17 @@
 /**
  * 烟花引擎
  * Feature: new-year-fireworks-game
- * 
+ *
  * 负责烟花的生成、动画和渲染
  * 需求：3.1, 3.2, 3.5, 3.7
  */
 
-import type { FireworkType, FireworkInstance, Particle, FireworkPattern } from '../types';
+import type {
+  FireworkType,
+  FireworkInstance,
+  Particle,
+  FireworkPattern,
+} from '../types';
 
 /**
  * 粒子对象池
@@ -44,7 +49,7 @@ class ParticlePool {
       vy: 0,
       color: '',
       alpha: 1,
-      size: 1
+      size: 1,
     };
   }
 
@@ -66,7 +71,7 @@ class ParticlePool {
  */
 export class FireworksEngine {
   private static readonly ACCELERATION_REMAINING_TIME_MS = 100;
-  
+
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private fireworks: FireworkInstance[] = [];
@@ -126,7 +131,7 @@ export class FireworksEngine {
       colors: ['#ff0000', '#ff6600', '#ffcc00', '#ff3366'],
       pattern: 'peony',
       duration: 2500,
-      specialEffect: undefined // 祝福语在发射时动态决定
+      specialEffect: undefined, // 祝福语在发射时动态决定
     });
 
     // 流星型 - 拖尾效果
@@ -137,7 +142,7 @@ export class FireworksEngine {
       colors: ['#00ffff', '#0099ff', '#ffffff'],
       pattern: 'meteor',
       duration: 3000,
-      specialEffect: undefined
+      specialEffect: undefined,
     });
 
     // 心形
@@ -148,7 +153,7 @@ export class FireworksEngine {
       colors: ['#ff1493', '#ff69b4', '#ffb6c1'],
       pattern: 'heart',
       duration: 2800,
-      specialEffect: undefined
+      specialEffect: undefined,
     });
 
     // 福字型
@@ -159,7 +164,7 @@ export class FireworksEngine {
       colors: ['#ff0000', '#ffd700', '#ff4500'],
       pattern: 'fortune',
       duration: 3000,
-      specialEffect: undefined
+      specialEffect: undefined,
     });
 
     // 红包型
@@ -170,7 +175,7 @@ export class FireworksEngine {
       colors: ['#ff0000', '#ffd700', '#ff6347'],
       pattern: 'redEnvelope',
       duration: 2500,
-      specialEffect: undefined
+      specialEffect: undefined,
     });
   }
 
@@ -267,9 +272,16 @@ export class FireworksEngine {
 
       this.ctx.save();
       this.ctx.globalAlpha = alpha;
-      
+
       // 绘制多层彩色光环
-      const colors = ['#ff0000', '#ff6600', '#ffcc00', '#00ff00', '#0099ff', '#9933ff'];
+      const colors = [
+        '#ff0000',
+        '#ff6600',
+        '#ffcc00',
+        '#00ff00',
+        '#0099ff',
+        '#9933ff',
+      ];
       for (let i = 0; i < colors.length; i++) {
         const r = radius + i * 10;
         this.ctx.strokeStyle = colors[i];
@@ -289,10 +301,10 @@ export class FireworksEngine {
 
   /**
    * 在指定位置发射烟花
-   * 
+   *
    * 当达到最大烟花数量限制时，会加速最旧的烟花以腾出空间，
    * 确保用户的每次点击都能看到烟花效果。
-   * 
+   *
    * 需求：3.1, 3.3
    *
    * @param x - X坐标
@@ -303,10 +315,12 @@ export class FireworksEngine {
   launchFirework(x: number, y: number, typeId?: string): string {
     // 检查是否超过最大烟花数量限制
     if (this.fireworks.length >= this.maxActiveFireworks) {
-      console.log('[FireworksEngine] Max fireworks limit reached, accelerating oldest firework');
+      console.log(
+        '[FireworksEngine] Max fireworks limit reached, accelerating oldest firework'
+      );
       this.accelerateOldestFirework();
     }
-    
+
     // 播放发射音效
     if (this.audioController) {
       try {
@@ -327,10 +341,19 @@ export class FireworksEngine {
     }
 
     // 动态添加祝福语（10%概率）
-    const blessings = ['新年快乐', '恭喜发财', '万事如意', '福星高照', '财源广进'];
+    const blessings = [
+      '新年快乐',
+      '恭喜发财',
+      '万事如意',
+      '福星高照',
+      '财源广进',
+    ];
     const typeWithBlessing = {
       ...type,
-      specialEffect: Math.random() < 0.1 ? blessings[Math.floor(Math.random() * blessings.length)] : undefined
+      specialEffect:
+        Math.random() < 0.1
+          ? blessings[Math.floor(Math.random() * blessings.length)]
+          : undefined,
     };
 
     // 创建烟花实例
@@ -344,7 +367,7 @@ export class FireworksEngine {
       y,
       startTime: Date.now(),
       particles,
-      state: 'launching'
+      state: 'launching',
     };
 
     this.fireworks.push(firework);
@@ -352,16 +375,15 @@ export class FireworksEngine {
     return id;
   }
 
-
   /**
    * 加速最旧的烟花以腾出空间
    * 通过缩短其剩余持续时间来加速完成
-   * 
+   *
    * 策略：将剩余时间缩短到100ms，让烟花快速进入消失阶段
    */
   private accelerateOldestFirework(): void {
     if (this.fireworks.length === 0) return;
-    
+
     // 找到最旧且还在活跃状态的烟花
     let oldestActiveFirework: FireworkInstance | null = null;
     for (const firework of this.fireworks) {
@@ -370,19 +392,24 @@ export class FireworksEngine {
         break; // 数组已按时间排序，第一个就是最旧的
       }
     }
-    
+
     if (!oldestActiveFirework) {
       console.log('[FireworksEngine] No active firework to accelerate');
       return;
     }
-    
+
     const elapsed = Date.now() - oldestActiveFirework.startTime;
     const remaining = oldestActiveFirework.type.duration - elapsed;
-    
+
     // 如果还有剩余时间，将其缩短到100ms
     if (remaining > FireworksEngine.ACCELERATION_REMAINING_TIME_MS) {
-      oldestActiveFirework.startTime = Date.now() - (oldestActiveFirework.type.duration - FireworksEngine.ACCELERATION_REMAINING_TIME_MS);
-      console.log(`[FireworksEngine] Accelerated firework ${oldestActiveFirework.id}, remaining: ${remaining}ms -> ${FireworksEngine.ACCELERATION_REMAINING_TIME_MS}ms`);
+      oldestActiveFirework.startTime =
+        Date.now() -
+        (oldestActiveFirework.type.duration -
+          FireworksEngine.ACCELERATION_REMAINING_TIME_MS);
+      console.log(
+        `[FireworksEngine] Accelerated firework ${oldestActiveFirework.id}, remaining: ${remaining}ms -> ${FireworksEngine.ACCELERATION_REMAINING_TIME_MS}ms`
+      );
     }
   }
 
@@ -394,17 +421,24 @@ export class FireworksEngine {
    * @param type - 烟花类型
    * @returns 粒子数组
    */
-  private createParticles(x: number, y: number, type: FireworkType): Particle[] {
+  private createParticles(
+    x: number,
+    y: number,
+    type: FireworkType
+  ): Particle[] {
     const particles: Particle[] = [];
     // 应用性能配置限制粒子数量
     const baseCount = type.particleCount;
-    const count = Math.floor((baseCount * this.performanceProfile.maxParticles) / 100);
+    const count = Math.floor(
+      (baseCount * this.performanceProfile.maxParticles) / 100
+    );
 
     for (let i = 0; i < count; i++) {
       const particle = this.particlePool.acquire();
       particle.x = x;
       particle.y = y;
-      particle.color = type.colors[Math.floor(Math.random() * type.colors.length)];
+      particle.color =
+        type.colors[Math.floor(Math.random() * type.colors.length)];
       particle.size = Math.random() * 3 + 1;
 
       // 根据图案类型设置速度
@@ -451,7 +485,12 @@ export class FireworksEngine {
         // 心形 - 心形曲线
         const t = (index / total) * Math.PI * 2;
         const heartX = 16 * Math.pow(Math.sin(t), 3);
-        const heartY = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+        const heartY = -(
+          13 * Math.cos(t) -
+          5 * Math.cos(2 * t) -
+          2 * Math.cos(3 * t) -
+          Math.cos(4 * t)
+        );
         particle.vx = heartX * 0.1;
         particle.vy = heartY * 0.1;
         break;
@@ -583,24 +622,26 @@ export class FireworksEngine {
 
         this.ctx.save();
         this.ctx.globalAlpha = particle.alpha;
-        
+
         // 应用光晕效果（如果启用）
         if (this.performanceProfile.enableGlow) {
           this.ctx.shadowBlur = 10;
           this.ctx.shadowColor = particle.color;
         }
-        
+
         this.ctx.fillStyle = particle.color;
         this.ctx.beginPath();
         this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
         this.ctx.fill();
-        
+
         // 应用拖尾效果（如果启用）
-        if (this.performanceProfile.enableTrails && (particle.vx !== 0 || particle.vy !== 0)) {
-          const trailLength = 10;
+        if (
+          this.performanceProfile.enableTrails &&
+          (particle.vx !== 0 || particle.vy !== 0)
+        ) {
           const trailX = particle.x - particle.vx * 0.5;
           const trailY = particle.y - particle.vy * 0.5;
-          
+
           this.ctx.globalAlpha = particle.alpha * 0.3;
           this.ctx.strokeStyle = particle.color;
           this.ctx.lineWidth = particle.size * 0.5;
@@ -609,39 +650,48 @@ export class FireworksEngine {
           this.ctx.lineTo(trailX, trailY);
           this.ctx.stroke();
         }
-        
+
         this.ctx.restore();
       }
 
       // 渲染特殊效果文字
       if (firework.type.specialEffect && firework.state === 'exploding') {
         this.ctx.save();
-        
+
         // 计算文字透明度（根据烟花状态）
         const elapsed = Date.now() - firework.startTime;
         const fadeStart = firework.type.duration * 0.5;
         const fadeEnd = firework.type.duration * 0.7;
         let textAlpha = 1;
-        
+
         if (elapsed > fadeStart) {
-          textAlpha = 1 - ((elapsed - fadeStart) / (fadeEnd - fadeStart));
+          textAlpha = 1 - (elapsed - fadeStart) / (fadeEnd - fadeStart);
           textAlpha = Math.max(0, Math.min(1, textAlpha));
         }
-        
+
         this.ctx.globalAlpha = textAlpha;
-        this.ctx.font = 'bold 32px "Noto Sans SC", "Microsoft YaHei", sans-serif';
+        this.ctx.font =
+          'bold 32px "Noto Sans SC", "Microsoft YaHei", sans-serif';
         this.ctx.fillStyle = '#ffd700';
         this.ctx.strokeStyle = '#ff0000';
         this.ctx.lineWidth = 3;
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
-        
+
         // 添加发光效果
         this.ctx.shadowBlur = 15;
         this.ctx.shadowColor = '#ffd700';
-        
-        this.ctx.strokeText(firework.type.specialEffect, firework.x, firework.y - 60);
-        this.ctx.fillText(firework.type.specialEffect, firework.x, firework.y - 60);
+
+        this.ctx.strokeText(
+          firework.type.specialEffect,
+          firework.x,
+          firework.y - 60
+        );
+        this.ctx.fillText(
+          firework.type.specialEffect,
+          firework.x,
+          firework.y - 60
+        );
         this.ctx.restore();
       }
     }
@@ -661,7 +711,7 @@ export class FireworksEngine {
 
     // 清空画布
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    
+
     console.log('[FireworksEngine] Cleared all fireworks');
   }
 
@@ -718,8 +768,12 @@ export class FireworksEngine {
         };
         this.maxActiveFireworks = 30;
     }
-    
-    console.log('[FireworksEngine] Performance profile updated:', this.performanceProfile, 'Max fireworks:', this.maxActiveFireworks);
+
+    console.log(
+      '[FireworksEngine] Performance profile updated:',
+      this.performanceProfile,
+      'Max fireworks:',
+      this.maxActiveFireworks
+    );
   }
 }
-

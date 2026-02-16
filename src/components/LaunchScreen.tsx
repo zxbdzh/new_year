@@ -4,7 +4,7 @@
  * 需求：3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7
  */
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { Button } from './Button';
 import './LaunchScreen.css';
@@ -22,8 +22,7 @@ interface LaunchScreenProps {
  * 内部维护网络状态检测（不显示UI）
  */
 export function LaunchScreen({ onStart, onAudioUnlock }: LaunchScreenProps) {
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [snowflakes] = useState(() => 
+  const [snowflakes] = useState(() =>
     Array.from({ length: 50 }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
@@ -31,20 +30,6 @@ export function LaunchScreen({ onStart, onAudioUnlock }: LaunchScreenProps) {
       animationDuration: 5 + Math.random() * 5,
     }))
   );
-
-  useEffect(() => {
-    // 监听网络状态变化
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
 
   const handleStart = () => {
     // 解锁音频（处理浏览器自动播放限制）
@@ -61,7 +46,7 @@ export function LaunchScreen({ onStart, onAudioUnlock }: LaunchScreenProps) {
         {/* 红灯笼装饰 */}
         <div className="lantern lantern-left" aria-hidden="true"></div>
         <div className="lantern lantern-right" aria-hidden="true"></div>
-        
+
         {/* 对联装饰 */}
         <div className="couplet couplet-left" aria-hidden="true">
           <span>爆竹声中辞旧岁</span>
@@ -92,7 +77,7 @@ export function LaunchScreen({ onStart, onAudioUnlock }: LaunchScreenProps) {
       <div className="launch-content">
         <h1 className="launch-title">新年烟花游戏</h1>
         <p className="launch-subtitle">点燃烟花，迎接新年</p>
-        
+
         {/* 点击开始按钮 - 使用新的Button组件 */}
         <Button
           variant="primary"

@@ -1,13 +1,13 @@
 /**
  * 网络同步器 (NetworkSynchronizer)
  * Feature: new-year-fireworks-game
- * 
+ *
  * 处理多人模式的实时通信，包括：
  * - WebSocket连接管理
  * - 消息队列和重试机制
  * - 网络延迟监测（ping/pong）
  * - 房间管理和玩家同步
- * 
+ *
  * 验证需求：5.3, 5.8
  */
 
@@ -39,7 +39,12 @@ interface NetworkSynchronizerConfig {
 /**
  * 连接状态
  */
-type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'failed';
+type ConnectionState =
+  | 'disconnected'
+  | 'connecting'
+  | 'connected'
+  | 'reconnecting'
+  | 'failed';
 
 /**
  * 网络延迟信息
@@ -66,8 +71,8 @@ export class NetworkSynchronizer {
   private localPlayerId: string | null = null;
   private messageQueue: NetworkMessage[] = [];
   private reconnectAttempts: number = 0;
-  private reconnectTimer: NodeJS.Timeout | null = null;
-  private pingTimer: NodeJS.Timeout | null = null;
+  private reconnectTimer: number | null = null;
+  private pingTimer: number | null = null;
   private latencyHistory: number[] = [];
   private lastPingTime: number = 0;
 
@@ -76,10 +81,28 @@ export class NetworkSynchronizer {
   private playerJoinCallbacks = new Set<(player: PlayerInfo) => void>();
   private playerLeaveCallbacks = new Set<(playerId: string) => void>();
   private roomUpdateCallbacks = new Set<(room: RoomInfo) => void>();
-  private chatMessageCallbacks = new Set<(message: { playerId: string; playerNickname: string; message: string; timestamp: number }) => void>();
-  private comboMilestoneCallbacks = new Set<(data: { playerId: string; playerNickname: string; comboCount: number; timestamp: number }) => void>();
-  private leaderboardUpdateCallbacks = new Set<(leaderboard: PlayerInfo[]) => void>();
-  private connectionStateCallbacks = new Set<(state: ConnectionState) => void>();
+  private chatMessageCallbacks = new Set<
+    (message: {
+      playerId: string;
+      playerNickname: string;
+      message: string;
+      timestamp: number;
+    }) => void
+  >();
+  private comboMilestoneCallbacks = new Set<
+    (data: {
+      playerId: string;
+      playerNickname: string;
+      comboCount: number;
+      timestamp: number;
+    }) => void
+  >();
+  private leaderboardUpdateCallbacks = new Set<
+    (leaderboard: PlayerInfo[]) => void
+  >();
+  private connectionStateCallbacks = new Set<
+    (state: ConnectionState) => void
+  >();
   private latencyUpdateCallbacks = new Set<(latency: LatencyInfo) => void>();
   private errorCallbacks = new Set<(error: string) => void>();
 
@@ -118,7 +141,10 @@ export class NetworkSynchronizer {
    * 连接到服务器
    */
   async connect(): Promise<void> {
-    if (this.connectionState === 'connected' || this.connectionState === 'connecting') {
+    if (
+      this.connectionState === 'connected' ||
+      this.connectionState === 'connecting'
+    ) {
       return;
     }
 
@@ -134,15 +160,18 @@ export class NetworkSynchronizer {
         });
 
         // 连接成功
-        this.socket.on('connected', (data: { socketId: string; timestamp: number }) => {
-          console.log('[NetworkSynchronizer] 连接成功:', data.socketId);
-          this.localPlayerId = data.socketId;
-          this.setConnectionState('connected');
-          this.reconnectAttempts = 0;
-          this.startPingMonitoring();
-          this.processMessageQueue();
-          resolve();
-        });
+        this.socket.on(
+          'connected',
+          (data: { socketId: string; timestamp: number }) => {
+            console.log('[NetworkSynchronizer] 连接成功:', data.socketId);
+            this.localPlayerId = data.socketId;
+            this.setConnectionState('connected');
+            this.reconnectAttempts = 0;
+            this.startPingMonitoring();
+            this.processMessageQueue();
+            resolve();
+          }
+        );
 
         // 连接错误
         this.socket.on('connect_error', (error: Error) => {
@@ -173,7 +202,7 @@ export class NetworkSynchronizer {
    */
   disconnect(): void {
     console.log('[NetworkSynchronizer] 主动断开连接');
-    
+
     // 停止定时器
     this.stopPingMonitoring();
     this.stopReconnectTimer();
@@ -209,27 +238,37 @@ export class NetworkSynchronizer {
     return new Promise((resolve, reject) => {
       // 监听加入成功
       const onRoomJoined = (data: { roomInfo: RoomInfo; playerId: string }) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         console.log('[NetworkSynchronizer] 成功加入房间:', data.roomInfo.id);
         this.roomInfo = data.roomInfo;
         this.localPlayerId = data.playerId;
-        this.socket?.off('room_joined', onRoomJoined);
-        this.socket?.off('join_room_error', onJoinError);
+        if (this.socket) {
+          this.socket.off('room_joined', onRoomJoined);
+          this.socket.off('join_room_error', onJoinError);
+        }
         resolve(data.roomInfo);
       };
 
       // 监听加入失败
-      const onJoinError = (data: { error: string; message: string }) => {
-        console.error('[NetworkSynchronizer] 加入房间失败:', data.message);
-        this.socket?.off('room_joined', onRoomJoined);
-        this.socket?.off('join_room_error', onJoinError);
-        reject(new Error(data.message));
+      const onJoinError = (_data: { error: string; message: string }) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        console.error('[NetworkSynchronizer] 加入房间失败:', _data.message);
+        if (this.socket) {
+          this.socket.off('room_joined', onRoomJoined);
+          this.socket.off('join_room_error', onJoinError);
+        }
+        reject(new Error(_data.message));
       };
 
-      this.socket.once('room_joined', onRoomJoined);
-      this.socket.once('join_room_error', onJoinError);
+      if (this.socket) {
+        this.socket.once('room_joined', onRoomJoined);
+        this.socket.once('join_room_error', onJoinError);
+      }
 
       // 发送加入房间请求
-      this.socket.emit('join_room', { nickname, roomType, code });
+      if (this.socket) {
+        this.socket.emit('join_room', { nickname, roomType, code });
+      }
     });
   }
 
@@ -326,7 +365,14 @@ export class NetworkSynchronizer {
   /**
    * 注册聊天消息回调
    */
-  onChatMessage(callback: (message: { playerId: string; playerNickname: string; message: string; timestamp: number }) => void): () => void {
+  onChatMessage(
+    callback: (message: {
+      playerId: string;
+      playerNickname: string;
+      message: string;
+      timestamp: number;
+    }) => void
+  ): () => void {
     this.chatMessageCallbacks.add(callback);
     return () => this.chatMessageCallbacks.delete(callback);
   }
@@ -334,7 +380,14 @@ export class NetworkSynchronizer {
   /**
    * 注册连击里程碑回调
    */
-  onComboMilestone(callback: (data: { playerId: string; playerNickname: string; comboCount: number; timestamp: number }) => void): () => void {
+  onComboMilestone(
+    callback: (data: {
+      playerId: string;
+      playerNickname: string;
+      comboCount: number;
+      timestamp: number;
+    }) => void
+  ): () => void {
     this.comboMilestoneCallbacks.add(callback);
     return () => this.comboMilestoneCallbacks.delete(callback);
   }
@@ -342,7 +395,9 @@ export class NetworkSynchronizer {
   /**
    * 注册排行榜更新回调
    */
-  onLeaderboardUpdate(callback: (leaderboard: PlayerInfo[]) => void): () => void {
+  onLeaderboardUpdate(
+    callback: (leaderboard: PlayerInfo[]) => void
+  ): () => void {
     this.leaderboardUpdateCallbacks.add(callback);
     return () => this.leaderboardUpdateCallbacks.delete(callback);
   }
@@ -350,7 +405,9 @@ export class NetworkSynchronizer {
   /**
    * 注册连接状态变化回调
    */
-  onConnectionStateChange(callback: (state: ConnectionState) => void): () => void {
+  onConnectionStateChange(
+    callback: (state: ConnectionState) => void
+  ): () => void {
     this.connectionStateCallbacks.add(callback);
     return () => this.connectionStateCallbacks.delete(callback);
   }
@@ -407,7 +464,9 @@ export class NetworkSynchronizer {
     }
 
     const current = this.latencyHistory[this.latencyHistory.length - 1];
-    const average = this.latencyHistory.reduce((sum, val) => sum + val, 0) / this.latencyHistory.length;
+    const average =
+      this.latencyHistory.reduce((sum, val) => sum + val, 0) /
+      this.latencyHistory.length;
     const min = Math.min(...this.latencyHistory);
     const max = Math.max(...this.latencyHistory);
 
@@ -429,41 +488,72 @@ export class NetworkSynchronizer {
 
     // 烟花广播
     this.socket.on('firework_broadcast', (data: FireworkAction) => {
-      this.fireworkActionCallbacks.forEach(callback => callback(data));
+      this.fireworkActionCallbacks.forEach((callback) => callback(data));
     });
 
     // 玩家加入
-    this.socket.on('player_joined', (data: { player: PlayerInfo; timestamp: number }) => {
-      this.playerJoinCallbacks.forEach(callback => callback(data.player));
-    });
+    this.socket.on(
+      'player_joined',
+      (data: { player: PlayerInfo; timestamp: number }) => {
+        this.playerJoinCallbacks.forEach((callback) => callback(data.player));
+      }
+    );
 
     // 玩家离开
-    this.socket.on('player_left', (data: { socketId: string; nickname?: string; timestamp: number }) => {
-      this.playerLeaveCallbacks.forEach(callback => callback(data.socketId));
-    });
+    this.socket.on(
+      'player_left',
+      (data: { socketId: string; nickname?: string; timestamp: number }) => {
+        this.playerLeaveCallbacks.forEach((callback) =>
+          callback(data.socketId)
+        );
+      }
+    );
 
     // 玩家列表更新
     this.socket.on('player_update', (data: { players: PlayerInfo[] }) => {
       if (this.roomInfo) {
         this.roomInfo.players = data.players;
-        this.roomUpdateCallbacks.forEach(callback => callback(this.roomInfo!));
+        this.roomUpdateCallbacks.forEach((callback) =>
+          callback(this.roomInfo!)
+        );
       }
     });
 
     // 聊天消息广播
-    this.socket.on('chat_broadcast', (data: { playerId: string; playerNickname: string; message: string; timestamp: number }) => {
-      this.chatMessageCallbacks.forEach(callback => callback(data));
-    });
+    this.socket.on(
+      'chat_broadcast',
+      (data: {
+        playerId: string;
+        playerNickname: string;
+        message: string;
+        timestamp: number;
+      }) => {
+        this.chatMessageCallbacks.forEach((callback) => callback(data));
+      }
+    );
 
     // 连击里程碑广播
-    this.socket.on('combo_broadcast', (data: { playerId: string; playerNickname: string; comboCount: number; timestamp: number }) => {
-      this.comboMilestoneCallbacks.forEach(callback => callback(data));
-    });
+    this.socket.on(
+      'combo_broadcast',
+      (data: {
+        playerId: string;
+        playerNickname: string;
+        comboCount: number;
+        timestamp: number;
+      }) => {
+        this.comboMilestoneCallbacks.forEach((callback) => callback(data));
+      }
+    );
 
     // 排行榜更新
-    this.socket.on('leaderboard_update', (data: { leaderboard: PlayerInfo[]; timestamp: number }) => {
-      this.leaderboardUpdateCallbacks.forEach(callback => callback(data.leaderboard));
-    });
+    this.socket.on(
+      'leaderboard_update',
+      (data: { leaderboard: PlayerInfo[]; timestamp: number }) => {
+        this.leaderboardUpdateCallbacks.forEach((callback) =>
+          callback(data.leaderboard)
+        );
+      }
+    );
 
     // Pong响应
     this.socket.on('pong', (data: { timestamp: number }) => {
@@ -508,7 +598,7 @@ export class NetworkSynchronizer {
     }
 
     const latencyInfo = this.getLatencyInfo();
-    this.latencyUpdateCallbacks.forEach(callback => callback(latencyInfo));
+    this.latencyUpdateCallbacks.forEach((callback) => callback(latencyInfo));
 
     // 如果延迟过高，发出警告
     if (latency > 3000) {
@@ -524,7 +614,11 @@ export class NetworkSynchronizer {
     this.stopPingMonitoring();
 
     // 如果是服务器主动断开或网络错误，尝试重连
-    if (reason === 'io server disconnect' || reason === 'transport close' || reason === 'ping timeout') {
+    if (
+      reason === 'io server disconnect' ||
+      reason === 'transport close' ||
+      reason === 'ping timeout'
+    ) {
       this.attemptReconnect();
     } else {
       this.setConnectionState('disconnected');
@@ -545,7 +639,9 @@ export class NetworkSynchronizer {
     this.reconnectAttempts++;
     this.setConnectionState('reconnecting');
 
-    console.log(`[NetworkSynchronizer] 尝试重连 (${this.reconnectAttempts}/${this.config.maxReconnectAttempts})`);
+    console.log(
+      `[NetworkSynchronizer] 尝试重连 (${this.reconnectAttempts}/${this.config.maxReconnectAttempts})`
+    );
 
     this.reconnectTimer = setTimeout(async () => {
       try {
@@ -578,7 +674,9 @@ export class NetworkSynchronizer {
     }
 
     this.messageQueue.push(message);
-    console.log(`[NetworkSynchronizer] 消息已加入队列 (${this.messageQueue.length}/${this.config.maxQueueSize})`);
+    console.log(
+      `[NetworkSynchronizer] 消息已加入队列 (${this.messageQueue.length}/${this.config.maxQueueSize})`
+    );
   }
 
   /**
@@ -589,7 +687,9 @@ export class NetworkSynchronizer {
       return;
     }
 
-    console.log(`[NetworkSynchronizer] 处理消息队列 (${this.messageQueue.length} 条消息)`);
+    console.log(
+      `[NetworkSynchronizer] 处理消息队列 (${this.messageQueue.length} 条消息)`
+    );
 
     while (this.messageQueue.length > 0) {
       const message = this.messageQueue.shift();
@@ -619,7 +719,7 @@ export class NetworkSynchronizer {
     if (this.connectionState !== state) {
       this.connectionState = state;
       console.log('[NetworkSynchronizer] 连接状态变更:', state);
-      this.connectionStateCallbacks.forEach(callback => callback(state));
+      this.connectionStateCallbacks.forEach((callback) => callback(state));
     }
   }
 
@@ -627,6 +727,6 @@ export class NetworkSynchronizer {
    * 通知错误
    */
   private notifyError(error: string): void {
-    this.errorCallbacks.forEach(callback => callback(error));
+    this.errorCallbacks.forEach((callback) => callback(error));
   }
 }
