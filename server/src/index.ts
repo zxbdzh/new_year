@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import { createServer } from 'http';
 import { Server, Socket } from 'socket.io';
@@ -60,8 +61,10 @@ app.get('/stats', (_req, res) => {
 const httpServer = createServer(app);
 
 // 创建Socket.io服务器
+const socketPath = process.env.SOCKET_IO_PATH || '/socket.io/';
+
 const io = new Server(httpServer, {
-  path: process.env.SOCKET_IO_PATH || '/socket.io/',
+  path: socketPath,
   cors: {
     origin: config.corsOrigin,
     credentials: true,
@@ -480,13 +483,14 @@ setInterval(() => {
 
 // 启动服务器
 httpServer.listen(config.port, () => {
+  const socketPath = process.env.SOCKET_IO_PATH || '/socket.io/';
   console.log(`
 ╔════════════════════════════════════════════════════════════╗
 ║                                                            ║
 ║   🎆 新年烟花游戏 WebSocket 服务器                          ║
 ║                                                            ║
 ║   服务器地址: http://localhost:${config.port}                      ║
-║   WebSocket: ws://localhost:${config.port}                        ║
+║   WebSocket: ws://localhost:${config.port}${socketPath}          ║
 ║   CORS允许: ${config.corsOrigin}                                  ║
 ║                                                            ║
 ║   心跳间隔: ${config.heartbeatInterval}ms                         ║
